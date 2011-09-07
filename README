@@ -1,0 +1,8 @@
+I. About 
+
+Peptest is a Mozilla automated testing harness for running responsiveness tests. These tests measure how long events spend away from the event loop.
+
+
+II. Installation
+
+Peptest requires some external packages, namely mozprocess, mozrunner and mozprofile.
