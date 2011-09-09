@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for peptest harness sanity</title>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=">Mozilla Bug </a>
+<p id="display">
+  <input id="testKeyEvent1" onkeypress="press1 = true">
+  <input id="testKeyEvent2" onkeydown="return false;" onkeypress="press2 = true">
+  <input id="testKeyEvent3" onkeypress="press3 = true">
+  <input id="testKeyEvent4" onkeydown="return false;" onkeypress="press4 = true">
+</p
+<div id="content" style="display: none">
+  
+</div>
+<pre id="test">
+<script class="testbody" type="text/javascript">
+    /** Test for sanity  **/
+    window.alert("sane");
+    window.close();
+</script>
+</pre>
+</body>
+</html>
