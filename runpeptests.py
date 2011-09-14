@@ -1,9 +1,12 @@
 from optparse import OptionParser
 from mozprofile import FirefoxProfile
 from mozrunner import FirefoxRunner
+from manifestparser import TestManifest
+from pepserver import PepHTTPServer
 
 import os
 import sys
+import signal
 import tempfile
 
 class PeptestOptions(OptionParser):
@@ -83,6 +86,7 @@ class PeptestOptions(OptionParser):
 
     def verifyOptions(self, options):
         """ verify correct options and cleanup paths """
+        # TODO
         return options 
 
 
@@ -91,30 +95,44 @@ class PeptestOptions(OptionParser):
 class Peptest():
     profile = None
     runner = None
+    manifest = None
+    server = None
+    child_pid = None
     options = {}
 
     def __init__(self, options, **kwargs):
         self.options = options
 
-    def runTests(self):
-        if self.options.testPath and os.path.exists(self.options.testPath):
-            if os.path.isdir(self.options.testPath):
-                for test in os.listdir(self.options.testPath):
-                    self.start(os.path.join(self.options.testPath, test))
-            else:
-                self.start(self.options.testPath)
-
-
     def start(self):
         # ensure we are stopped
         self.stop()
+        
+        # Create the profile
+        self.profile = PepProfile(profile=self.options.profilePath,
+                                  addons=['extension/pep.xpi'])
 
-        print testPath
-        self.profile = PepProfile(addons=['extension/pep.xpi'])
+        # Open and convert the manifest to json
+        manifest = PepManifest()
+        manifest.read(self.options.testPath)
 
+        # Fork a server to serve the tests
+        self.runServer()
+
+        # Create a JSON Manifest
+        jsonManifest = open('manifest.json', 'w')
+        print str(manifest.get())
+        jsonManifest.write(str(manifest.toJSON()))
+
+        # Construct the browser arguments
         cmdargs = []
+        # TODO Make browserArgs a list
         cmdargs.extend(self.options.browserArgs)
-        cmdargs.append(testPath)
+        cmdargs.extend(['-pep-start', os.path.realpath(jsonManifest.name)])
+        cmdargs.append('-pep-noisy')
+
+        jsonManifest.close()
+
+        print str(cmdargs)
 
         # run with managed process handler
         self.runner = PepRunner(profile=self.profile,
@@ -122,19 +140,41 @@ class Peptest():
                                 cmdargs=cmdargs)
         self.runner.start()
         self.runner.wait()
+
+    def runServer(self):
+        pId = os.fork()
+        # if child process
+        if pId == 0:
+            os.chdir(os.path.dirname(self.options.testPath))
+            self.server = PepHTTPServer(8080)
+            print "Starting server on port 8080"
+            self.server.serve_forever()
+        else:
+            self.child_pid = pId
     
     def stop(self):
         """Kill the app"""
         if self.runner is not None:
             self.runner.stop()
 
+        print "child_process: " + str(self.child_pid)
+        if self.child_pid is not None:
+            os.kill(self.child_pid, signal.SIGKILL)
+
 class PepProfile(FirefoxProfile):
-    def __init__(self, profile=None, addons=None):
-        Profile.__init__(self, profile=profile, addons=addons, restore=False)
+    def __init__(self, profile=None, addons=None, preferences=None):
+        FirefoxProfile.__init__(self, profile=profile, addons=addons, preferences=preferences, restore=False)
 
 class PepRunner(FirefoxRunner):
     def __init__(self, profile=None, binary=None, cmdargs=None, env=None):
-        FirefoxRunner.__init__(profile=profile, binary=binary, cmdargs=cmdargs, env=env)
+        FirefoxRunner.__init__(self, profile=profile, binary=binary, cmdargs=cmdargs, env=env)
+
+class PepManifest(TestManifest):
+    def __init(self, manifests=(), defaults=None, strict=True):
+        TestManifest.__init__(self, manifests=manifests, defaults=defaults, strict=strict)
+
+    def toJSON(self):
+        return str(self.get()).replace("'", "\"")
 
 def main():
     parser = PeptestOptions()
@@ -145,6 +185,7 @@ def main():
 
     peptest = Peptest(options)
     peptest.start()
+    peptest.stop()
 
 if __name__ == '__main__':
     main()
