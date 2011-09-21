@@ -27,6 +27,7 @@ build.xml adapted from Shawn Wilsher's rtse
     <zip destfile="jar/pep.jar">
       <zipfileset dir="" includes="components/**" excludes="**GIT"/>
       <zipfileset dir="" includes="chrome/**" excludes="**GIT"/>
+      <zipfileset dir="" includes="resource/**" excludes="**GIT"/>
       <zipfileset dir="" includes="locale/**" excludes="**GIT"/>
       <zipfileset dir="" includes="skin/**" excludes="**GIT"/>
     </zip>
@@ -37,6 +38,7 @@ build.xml adapted from Shawn Wilsher's rtse
     <zip destfile="pep.xpi">
       <zipfileset dir="" includes="components/**" excludes="**GIT"/>
       <zipfileset dir="" includes="chrome/**" excludes="**GIT"/>
+      <zipfileset dir="" includes="resource/**" excludes="**GIT"/>
       <zipfileset dir="" includes="locale/**" excludes="**GIT"/>
       <zipfileset dir="" includes="skin/**" excludes="**GIT"/>
       <zipfileset dir="" includes="install.rdf"/>

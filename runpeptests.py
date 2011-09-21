@@ -18,7 +18,7 @@ class PeptestOptions(OptionParser):
         
         self.add_option("--log-file",
                         action = "store", type = "string", dest = "logFile",
-                        metavar = "FILE", default = "",
+                        metavar = "FILE", default = None,
                         help = "file to which logging occurs")
 
         self.add_option("--autorun",
@@ -135,9 +135,17 @@ class Peptest():
         print str(cmdargs)
 
         # run with managed process handler
+        env = os.environ
+        env['MOZ_INSTRUMENT_EVENT_LOOP'] = "1"
+        if self.options.logFile != None:
+            env['MOZ_INSTRUMENT_EVENT_LOOP_OUTPUT'] = self.options.logFile
+
+        print self.options.app + " " + str (cmdargs)
+        print str(env)
         self.runner = PepRunner(profile=self.profile,
                                 binary=self.options.app,
-                                cmdargs=cmdargs)
+                                cmdargs=cmdargs,
+                                env=env)
         self.runner.start()
         self.runner.wait()
 
