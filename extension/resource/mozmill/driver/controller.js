@@ -42,10 +42,10 @@ var EXPORTED_SYMBOLS = ["MozMillController", "globalEventRegistry", "sleep"];
 
 var EventUtils = {}; Components.utils.import('resource://mozmill/stdlib/EventUtils.js', EventUtils);
 
-var utils = {}; Components.utils.import('resource://mozmill/modules/utils.js', utils);
-var elementslib = {}; Components.utils.import('resource://mozmill/modules/elementslib.js', elementslib);
-var mozelement = {}; Components.utils.import('resource://mozmill/modules/mozelement.js', mozelement);
-Components.utils.import('resource://mozmill/modules/msgmanager.js');
+var utils = {}; Components.utils.import('resource://mozmill/driver/utils.js', utils);
+var elementslib = {}; Components.utils.import('resource://mozmill/driver/elementslib.js', elementslib);
+var mozelement = {}; Components.utils.import('resource://mozmill/driver/mozelement.js', mozelement);
+var msg = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', msg);
 
 var hwindow = Components.classes["@mozilla.org/appshell/appShellService;1"]
                 .getService(Components.interfaces.nsIAppShellService)
@@ -267,7 +267,7 @@ var MozMillController = function (window) {
   this.window = window;
 
   this.mozmillModule = {};
-  Components.utils.import('resource://mozmill/modules/mozmill.js', this.mozmillModule);
+  Components.utils.import('resource://mozmill/driver/mozmill.js', this.mozmillModule);
 
   utils.waitFor(function() {
     return window != null && this.isLoaded();
@@ -296,7 +296,7 @@ MozMillController.prototype.open = function(url)
       throw new Error("MozMillController.open not supported.");
   }
 
-  msg.pass({'function':'Controller.open()'});
+  msg.broker.pass({'function':'Controller.open()'});
 }
 
 /**
@@ -349,9 +349,9 @@ MozMillController.prototype.screenShot = function _screenShot(node, name, save, 
               "timestamp": d.toLocaleString(),
             }
   // Send the screenshot to the message manager
-  msg.sendMessage("screenShot", obj);
+  msg.broker.sendMessage("screenShot", obj);
 
-  msg.pass({'function':'controller.screenShot()'});
+  msg.broker.pass({'function':'controller.screenShot()'});
 }
 
 /**
@@ -369,7 +369,7 @@ MozMillController.prototype.waitFor = function(callback, message, timeout,
                                                interval, thisObject) {
   utils.waitFor(callback, message, timeout, interval, thisObject);
 
-  msg.pass({'function':'controller.waitFor()'});
+  msg.broker.pass({'function':'controller.waitFor()'});
 }
 
 MozMillController.prototype.__defineGetter__("waitForEvents", function() {
@@ -400,18 +400,18 @@ MozMillController.prototype.waitForImage = function (elem, timeout, interval) {
     return elem.getNode().complete == true;
   }, "timeout exceeded for waitForImage " + elem.getInfo(), timeout, interval);
 
-  msg.pass({'function':'Controller.waitForImage()'});
+  msg.broker.pass({'function':'Controller.waitForImage()'});
 }
 
 MozMillController.prototype.startUserShutdown = function (timeout, restart, next, resetProfile) {
   if (restart && resetProfile) {
       throw new Error("You can't have a user-restart and reset the profile; there is a race condition");
   }
-  msg.sendMessage('userShutdown', {'user': true,
+  msg.broker.sendMessage('userShutdown', {'user': true,
                                   'restart': Boolean(restart),
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
-  this.window.setTimeout(msg.sendMessage, timeout, 'userShutdown', 0);
+  this.window.setTimeout(msg.broker.sendMessage, timeout, 'userShutdown', 0);
 }
 
 MozMillController.prototype.restartApplication = function (next, resetProfile) 
@@ -419,12 +419,12 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
   // restart the application via the python runner
   // - next : name of the next test function to run after restart
   // - resetProfile : whether to reset the profile after restart
-  msg.sendMessage('userShutdown', {'user': false,
+  msg.broker.sendMessage('userShutdown', {'user': false,
                                   'restart': true,
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
-  msg.sendMessage('endTest');
-  msg.sendMessage('persist');
+  msg.broker.sendMessage('endTest');
+  msg.broker.sendMessage('persist');
   utils.getMethodInWindows('goQuitApplication')();
 }
 
@@ -432,33 +432,33 @@ MozMillController.prototype.stopApplication = function (resetProfile)
 {
   // stop the application via the python runner
   // - resetProfile : whether to reset the profile after shutdown
-  msg.sendMessage('userShutdown', {'user': false,
+  msg.broker.sendMessage('userShutdown', {'user': false,
                                   'restart': false,
                                   'resetProfile': Boolean(resetProfile)});
-  msg.sendMessage('endTest');
-  msg.sendMessage('persist');
+  msg.broker.sendMessage('endTest');
+  msg.broker.sendMessage('persist');
   utils.getMethodInWindows('goQuitApplication')();
 }
 
 //Browser navigation functions
 MozMillController.prototype.goBack = function(){
   this.window.content.history.back();
-  msg.pass({'function':'Controller.goBack()'});
+  msg.broker.pass({'function':'Controller.goBack()'});
   return true;
 }
 MozMillController.prototype.goForward = function(){
   this.window.content.history.forward();
-  msg.pass({'function':'Controller.goForward()'});
+  msg.broker.pass({'function':'Controller.goForward()'});
   return true;
 }
 MozMillController.prototype.refresh = function(){
   this.window.content.location.reload(true);
-  msg.pass({'function':'Controller.refresh()'});
+  msg.broker.pass({'function':'Controller.refresh()'});
   return true;
 }
 
 function logDeprecated(funcName, message) {
-   msg.log({'function': funcName + '() - DEPRECATED', 'message': funcName + '() is deprecated' + message});
+   msg.broker.log({'function': funcName + '() - DEPRECATED', 'message': funcName + '() is deprecated' + message});
 }
 
 function logDeprecatedAssert(funcName) {
@@ -471,7 +471,7 @@ MozMillController.prototype.assertText = function (el, text) {
   var n = el.getNode();
 
   if (n && n.innerHTML == text){
-    msg.pass({'function':'Controller.assertText()'});
+    msg.broker.pass({'function':'Controller.assertText()'});
     return true;
    }
 
@@ -490,7 +490,7 @@ MozMillController.prototype.assertNode = function (el) {
     throw new Error("could not find element " + el.getInfo());
     return false;
   }
-  msg.pass({'function':'Controller.assertNode()'});
+  msg.broker.pass({'function':'Controller.assertNode()'});
   return true;
 };
 
@@ -502,7 +502,7 @@ MozMillController.prototype.assertNodeNotExist = function (el) {
   try {
     var element = el.getNode();
   } catch(err){
-    msg.pass({'function':'Controller.assertNodeNotExist()'});
+    msg.broker.pass({'function':'Controller.assertNodeNotExist()'});
     return true;
   }
 
@@ -510,7 +510,7 @@ MozMillController.prototype.assertNodeNotExist = function (el) {
     throw new Error("Unexpectedly found element " + el.getInfo());
     return false;
   } else {
-    msg.pass({'function':'Controller.assertNodeNotExist()'});
+    msg.broker.pass({'function':'Controller.assertNodeNotExist()'});
     return true;
   }
 };
@@ -523,7 +523,7 @@ MozMillController.prototype.assertValue = function (el, value) {
   var n = el.getNode();
 
   if (n && n.value == value){
-    msg.pass({'function':'Controller.assertValue()'});
+    msg.broker.pass({'function':'Controller.assertValue()'});
     return true;
   }
   throw new Error("could not validate element " + el.getInfo()+" with value "+ value);
@@ -538,7 +538,7 @@ MozMillController.prototype.assert = function(callback, message, thisObject)
   logDeprecatedAssert("assert");
   utils.assert(callback, message, thisObject);
 
-  msg.pass({'function': ": controller.assert('" + callback + "')"});
+  msg.broker.pass({'function': ": controller.assert('" + callback + "')"});
   return true;
 }
 
@@ -551,7 +551,7 @@ MozMillController.prototype.assertSelected = function (el, value) {
   var validator = value;
 
   if (n && n.options[n.selectedIndex].value == validator){
-    msg.pass({'function':'Controller.assertSelected()'});
+    msg.broker.pass({'function':'Controller.assertSelected()'});
     return true;
     }
   throw new Error("could not assert value for element " + el.getInfo()+" with value "+ value);
@@ -566,7 +566,7 @@ MozMillController.prototype.assertChecked = function (el) {
   var element = el.getNode();
 
   if (element && element.checked == true){
-    msg.pass({'function':'Controller.assertChecked()'});
+    msg.broker.pass({'function':'Controller.assertChecked()'});
     return true;
     }
   throw new Error("assert failed for checked element " + el.getInfo());
@@ -584,7 +584,7 @@ MozMillController.prototype.assertNotChecked = function (el) {
   }
 
   if (!element.hasAttribute("checked") || element.checked != true){
-    msg.pass({'function':'Controller.assertNotChecked()'});
+    msg.broker.pass({'function':'Controller.assertNotChecked()'});
     return true;
     }
   throw new Error("assert failed for not checked element " + el.getInfo());
@@ -608,7 +608,7 @@ MozMillController.prototype.assertJSProperty = function(el, attrib, val) {
   var value = element[attrib];
   var res = (value !== undefined && (val === undefined ? true : String(value) == String(val)));
   if (res) {
-    msg.pass({'function':'Controller.assertJSProperty("' + el.getInfo() + '") : ' + val});
+    msg.broker.pass({'function':'Controller.assertJSProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertJSProperty(" + el.getInfo() + ") : " + 
                      (val === undefined ? "property '" + attrib + "' doesn't exist" : val + " == " + value));
@@ -633,7 +633,7 @@ MozMillController.prototype.assertNotJSProperty = function(el, attrib, val) {
   var value = element[attrib];
   var res = (val === undefined ? value === undefined : String(value) != String(val));
   if (res) {
-    msg.pass({'function':'Controller.assertNotProperty("' + el.getInfo() + '") : ' + val});
+    msg.broker.pass({'function':'Controller.assertNotProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertNotJSProperty(" + el.getInfo() + ") : " +
                      (val === undefined ? "property '" + attrib + "' exists" : val + " != " + value));
@@ -662,7 +662,7 @@ MozMillController.prototype.assertDOMProperty = function(el, attrib, val) {
   }   
  
   if (res) {
-    msg.pass({'function':'Controller.assertDOMProperty("' + el.getInfo() + '") : ' + val});
+    msg.broker.pass({'function':'Controller.assertDOMProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertDOMProperty(" + el.getInfo() + ") : " + 
                      (val === undefined ? "property '" + attrib + "' doesn't exist" : val + " == " + value));
@@ -690,7 +690,7 @@ MozMillController.prototype.assertNotDOMProperty = function(el, attrib, val) {
     res = (String(value) == String(val));
   }   
   if (!res) {
-    msg.pass({'function':'Controller.assertNotDOMProperty("' + el.getInfo() + '") : ' + val});
+    msg.broker.pass({'function':'Controller.assertNotDOMProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertNotDOMProperty(" + el.getInfo() + ") : " + 
                      (val == undefined ? "property '" + attrib + "' exists" : val + " == " + value));
@@ -754,7 +754,7 @@ MozMillController.prototype.assertImageLoaded = function (el) {
     ret = true;
   }
   if (ret) {
-    msg.pass({'function':'Controller.assertImageLoaded'});
+    msg.broker.pass({'function':'Controller.assertImageLoaded'});
   } else {
     throw new Error('Controller.assertImageLoaded() failed.')
   }
@@ -796,7 +796,7 @@ MozMillController.prototype.mouseMove = function (doc, start, dest) {
   // Do the initial move to the drag element position
   triggerMouseEvent(doc.body, start[0], start[1]);
   triggerMouseEvent(doc.body, dest[0], dest[1]);
-  msg.pass({'function':'Controller.mouseMove()'});
+  msg.broker.pass({'function':'Controller.mouseMove()'});
   return true;
 }
 
@@ -938,7 +938,7 @@ function browserAdditions (controller) {
         return this.isLoaded(owner);
     }, "controller.waitForPageLoad(): Timeout waiting for page loaded.",
        timeout, aInterval, this);
-    msg.pass({'function':'controller.waitForPageLoad()'});
+    msg.broker.pass({'function':'controller.waitForPageLoad()'});
   }
 }
 

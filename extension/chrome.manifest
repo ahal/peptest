@@ -1,4 +1,6 @@
-resource mozmill resource/
+resource mozmill resource/mozmill/
+resource stdlib resource/stdlib/
+resource pep resource/pep/
 content pep chrome/content/
 locale	pep en-US	locale/en-US/
 skin	pep classic/1.0	skin/

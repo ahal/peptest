@@ -44,7 +44,7 @@
   screenX="0" screenY="0">
   
   <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js"/>
-  <script type="application/x-javascript" src="chrome://pep/content/pep.js"/>
+  <script type="application/x-javascript" src="chrome://pep/content/pepinit.js"/>
   <script type="application/x-javascript" src="chrome://pep/content/quit.js"/>
 
   <browser id="contentPep" src="http://www.mozilla.org" 

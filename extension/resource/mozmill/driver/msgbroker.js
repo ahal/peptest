@@ -1,16 +1,16 @@
-var EXPORTED_SYMBOLS = ['msg'];
+var EXPORTED_SYMBOLS = ['broker'];
 
-var msg = new MessageManager();
+var broker = new MessageBroker();
 
-function MessageManager() {
+function MessageBroker() {
   this.listeners = [];
 }
 
-MessageManager.prototype.addListener = function(observer) {
+MessageBroker.prototype.addListener = function(observer) {
     this.listeners.push(observer);
 }
 
-MessageManager.prototype.removeListener = function(observer) {
+MessageBroker.prototype.removeListener = function(observer) {
     for (let i = 0; i < this.listeners.length; ++i) {
         if (this.listeners[i] == listener) {
             this.listeners.splice(i, 1); // remove listener from array
@@ -18,20 +18,20 @@ MessageManager.prototype.removeListener = function(observer) {
     }
 }
 
-MessageManager.prototype.sendMessage = function(msgType, obj) {
+MessageBroker.prototype.sendMessage = function(msgType, obj) {
   for (let i = 0; i < this.listeners.length; ++i) {
     this.listeners[i].update(msgType, obj);
   }
 }
 
-MessageManager.prototype.log = function(obj) {
+MessageBroker.prototype.log = function(obj) {
   this.sendMessage('log', obj);
 }
 
-MessageManager.prototype.pass = function(obj) {
+MessageBroker.prototype.pass = function(obj) {
   this.sendMessage('pass', obj);
 }
 
-MessageManager.prototype.fail = function(obj) {
+MessageBroker.prototype.fail = function(obj) {
   this.sendMessage('fail', obj);
 }

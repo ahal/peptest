@@ -42,10 +42,9 @@ var EXPORTED_SYMBOLS = ["Elem", "Selector", "ID", "Link", "XPath", "Name", "Look
                        ];
 
 var EventUtils = {}; Components.utils.import('resource://mozmill/stdlib/EventUtils.js', EventUtils);
-var utils = {}; Components.utils.import('resource://mozmill/modules/utils.js', utils);
-var elementslib = {}; Components.utils.import('resource://mozmill/modules/elementslib.js', elementslib);
-Components.utils.import('resource://mozmill/modules/msgmanager.js');
-const consoleService = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
+var utils = {}; Components.utils.import('resource://mozmill/driver/utils.js', utils);
+var elementslib = {}; Components.utils.import('resource://mozmill/driver/elementslib.js', elementslib);
+var msg = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', msg);
 
 // A list of all the subclasses available.  Shared modules can push their own subclasses onto this list
 var subclasses = [MozMillCheckBox, MozMillRadio, MozMillDropList, MozMillTextBox];
@@ -66,7 +65,6 @@ function createInstance(locatorType, locator, elem) {
     }
     if (MozMillElement.isType(elem)) return new MozMillElement(locatorType, locator, args);
   }
-  consoleService.logStringMessage("elem: " + elem);
   throw new Error("could not find element " + locatorType + ": " + locator);
 };
 
@@ -192,7 +190,7 @@ MozMillElement.prototype.keypress = function(aKey, aModifiers, aExpectedEvent) {
     EventUtils.synthesizeKey(aKey, aModifiers || {}, win);
   }
 
-  msg.pass({'function':'MozMillElement.keypress()'});
+  msg.broker.pass({'function':'MozMillElement.keypress()'});
   return true;
 };
 
@@ -282,7 +280,7 @@ MozMillElement.prototype.click = function(left, top, expectedEvent) {
     this.mouseEvent(left, top, {}, expectedEvent);
   }
 
-  msg.pass({'function':'MozMillElement.click()'});
+  msg.broker.pass({'function':'MozMillElement.click()'});
 };
 
 /**
@@ -291,7 +289,7 @@ MozMillElement.prototype.click = function(left, top, expectedEvent) {
 MozMillElement.prototype.doubleClick = function(left, top, expectedEvent) {
   this.mouseEvent(left, top, {clickCount: 2}, expectedEvent);
 
-  msg.pass({'function':'MozMillElement.doubleClick()'});
+  msg.broker.pass({'function':'MozMillElement.doubleClick()'});
   return true;
 };
 
@@ -301,7 +299,7 @@ MozMillElement.prototype.doubleClick = function(left, top, expectedEvent) {
 MozMillElement.prototype.mouseDown = function (button, left, top, expectedEvent) {
   this.mouseEvent(left, top, {button: button, type: "mousedown"}, expectedEvent);
 
-  msg.pass({'function':'MozMillElement.mouseDown()'});
+  msg.broker.pass({'function':'MozMillElement.mouseDown()'});
   return true;
 };
 
@@ -311,7 +309,7 @@ MozMillElement.prototype.mouseDown = function (button, left, top, expectedEvent)
 MozMillElement.prototype.mouseOut = function (button, left, top, expectedEvent) {
   this.mouseEvent(left, top, {button: button, type: "mouseout"}, expectedEvent);
 
-  msg.pass({'function':'MozMillElement.mouseOut()'});
+  msg.broker.pass({'function':'MozMillElement.mouseOut()'});
   return true;
 };
 
@@ -321,7 +319,7 @@ MozMillElement.prototype.mouseOut = function (button, left, top, expectedEvent) 
 MozMillElement.prototype.mouseOver = function (button, left, top, expectedEvent) {
   this.mouseEvent(left, top, {button: button, type: "mouseover"}, expectedEvent);
 
-  msg.pass({'function':'MozMillElement.mouseOver()'});
+  msg.broker.pass({'function':'MozMillElement.mouseOver()'});
   return true;
 };
 
@@ -331,7 +329,7 @@ MozMillElement.prototype.mouseOver = function (button, left, top, expectedEvent)
 MozMillElement.prototype.mouseUp = function (button, left, top, expectedEvent) {
   this.mouseEvent(left, top, {button: button, type: "mouseup"}, expectedEvent);
 
-  msg.pass({'function':'MozMillElement.mouseUp()'});
+  msg.broker.pass({'function':'MozMillElement.mouseUp()'});
   return true;
 };
 
@@ -341,7 +339,7 @@ MozMillElement.prototype.mouseUp = function (button, left, top, expectedEvent) {
 MozMillElement.prototype.middleClick = function(left, top, expectedEvent) {
   this.mouseEvent(left, top, {button: 1}, expectedEvent);
 
-  msg.pass({'function':'MozMillElement.middleClick()'});
+  msg.broker.pass({'function':'MozMillElement.middleClick()'});
   return true;
 };
 
@@ -351,7 +349,7 @@ MozMillElement.prototype.middleClick = function(left, top, expectedEvent) {
 MozMillElement.prototype.rightClick = function(left, top, expectedEvent) {
   this.mouseEvent(left, top, {type : "contextmenu", button: 2 }, expectedEvent);
 
-  msg.pass({'function':'MozMillElement.rightClick()'});
+  msg.broker.pass({'function':'MozMillElement.rightClick()'});
   return true;
 };
 
@@ -361,7 +359,7 @@ MozMillElement.prototype.waitForElement = function(timeout, interval) {
     return elem.exists();
   }, "Timeout exceeded for waitForElement " + this.getInfo(), timeout, interval);
 
-  msg.pass({'function':'MozMillElement.waitForElement()'});
+  msg.broker.pass({'function':'MozMillElement.waitForElement()'});
 };
 
 MozMillElement.prototype.waitForElementNotPresent = function(timeout, interval) {
@@ -370,7 +368,7 @@ MozMillElement.prototype.waitForElementNotPresent = function(timeout, interval) 
     return !elem.exists();
   }, "Timeout exceeded for waitForElementNotPresent " + this.getInfo(), timeout, interval);
 
-  msg.pass({'function':'MozMillElement.waitForElementNotPresent()'});
+  msg.broker.pass({'function':'MozMillElement.waitForElementNotPresent()'});
 };
 
 MozMillElement.prototype.waitThenClick = function (timeout, interval, left, top, expectedEvent) {
@@ -442,7 +440,7 @@ MozMillCheckBox.prototype.check = function(state) {
     result = true;
   }
 
-  msg.pass({'function':'MozMillCheckBox.check(' + this.getInfo() + ', state: ' + state + ')'});
+  msg.broker.pass({'function':'MozMillCheckBox.check(' + this.getInfo() + ', state: ' + state + ')'});
   return result;
 };
 
@@ -499,7 +497,7 @@ MozMillRadio.prototype.select = function(index) {
     return element.checked == true;
   }, "Radio button " + this.getInfo() + " could not be selected", 500);
 
-  msg.pass({'function':'MozMillRadio.select(' + this.getInfo() + ')'});
+  msg.broker.pass({'function':'MozMillRadio.select(' + this.getInfo() + ')'});
   return true;
 };
 
@@ -546,7 +544,7 @@ MozMillDropList.prototype.select = function (indx, option, value) {
         this.element.selectedIndex = indx;
         this.dispatchEvent('change', true);
 
-        msg.pass({'function':'MozMillDropList.select()'});
+        msg.broker.pass({'function':'MozMillDropList.select()'});
         return true;
       } else {
         item = this.element.options.item(indx);
@@ -569,7 +567,7 @@ MozMillDropList.prototype.select = function (indx, option, value) {
       item.selected = true;
       this.dispatchEvent('change', true);
 
-      msg.pass({'function':'MozMillDropList.select()'});
+      msg.broker.pass({'function':'MozMillDropList.select()'});
       return true;
     } catch (ex) {
       throw new Error("No item selected for element " + this.getInfo());
@@ -592,7 +590,7 @@ MozMillDropList.prototype.select = function (indx, option, value) {
         this.element.boxObject.QueryInterface(Components.interfaces.nsIMenuBoxObject).activeChild = null;
         this.dispatchEvent('change', true);
 
-        msg.pass({'function':'MozMillDropList.select()'});
+        msg.broker.pass({'function':'MozMillDropList.select()'});
         return true;
       } else {
         item = menuitems[indx];
@@ -623,7 +621,7 @@ MozMillDropList.prototype.select = function (indx, option, value) {
 
       EventUtils.synthesizeMouse(item, 1, 1, {}, ownerDoc.defaultView);
 
-      msg.pass({'function':'MozMillDropList.select()'});
+      msg.broker.pass({'function':'MozMillDropList.select()'});
       return true;
     } catch (ex) {
       throw new Error('No item selected for element ' + this.getInfo());
@@ -699,6 +697,6 @@ MozMillTextBox.prototype.sendKeys = function (aText, aModifiers, aExpectedEvent)
     }
   });
 
-  msg.pass({'function':'MozMillTextBox.type()'});
+  msg.broker.pass({'function':'MozMillTextBox.type()'});
   return true;
 };

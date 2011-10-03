@@ -45,6 +45,7 @@ const PEP_DESCRIPTION = "PEP Firefox Responsiveness Testing Harness";
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
+const Cu = Components.utils;
 const Cr = Components.results;
 
 const categoryManager = Cc["@mozilla.org/categorymanager;1"].getService(Ci.nsICategoryManager);
