@@ -58,14 +58,12 @@ function pepInit(args) {
     let obj = loadManifest(manifest);
     let firstRun = true;
     appContent = document.getElementById('appcontent');
-    if (appContent) {
-      appContent.addEventListener('pageshow', function() {
-        if (firstRun) {
-          firstRun = false;
-          runTests(obj.tests);
-        }
-      });
-    }
+    appContent.addEventListener('pageshow', function() {
+      if (firstRun) {
+        firstRun = false;
+        runTests(obj.tests);
+      }
+    });
   } catch(e) {
     utils.dumpLine('ERROR ' + e.toString());
   }
