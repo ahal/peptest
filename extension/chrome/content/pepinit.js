@@ -41,7 +41,6 @@ Components.utils.import('resource://gre/modules/NetUtil.jsm');
 var msg = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', msg);
 var pep = {}; Components.utils.import('resource://pep/pep.js', pep);
 var utils = {}; Components.utils.import('resource://pep/utils.js', utils);
-var quit = {}; Components.utils.import('resource://stdlib/quit.js', quit);
 
 // the io service
 const gIOS = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);

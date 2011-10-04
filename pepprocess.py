@@ -46,7 +46,7 @@ class PepProcess(ProcessHandler):
                        args=None, cwd=None,
                        env=os.environ.copy(),
                        ignore_children=False,
-                       peplog=None, **kwargs):
+                       **kwargs):
 
         ProcessHandler.__init__(self, cmd, args=args, cwd=cwd, env=env,
                                 ignore_children=ignore_children, **kwargs)
@@ -54,7 +54,7 @@ class PepProcess(ProcessHandler):
         self.currentTest = None
         self.currentAction = None 
         self.testPass = True
-        self.logger = mozlog.getLogger('PEP', logfile=peplog)
+        self.logger = mozlog.getLogger('PEP')
 
     def processOutputLine(self, line):
         """
@@ -62,8 +62,10 @@ class PepProcess(ProcessHandler):
         Responsible for determining which output lines are relevant
         and writing them to a log
         """
+
         tokens = line.split(' ')
         if tokens[0] == 'PEP':
+            self.logger.debug(line)
             if tokens[1] == 'TEST-START':
                 self.currentTest = tokens[2].rstrip()
                 self.testPass = True

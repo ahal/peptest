@@ -41,6 +41,7 @@ from manifestparser import TestManifest
 from pepserver import PepHTTPServer
 from pepprocess import PepProcess
 
+import mozlog
 import os
 import sys
 import signal
@@ -118,6 +119,11 @@ class PeptestOptions(OptionParser):
                         help="Directory where the profile will be stored. "
                              "This directory will be deleted after the tests are finished")
 
+        self.add_option("--server-port",
+                        action="store", type="int", dest="serverPort",
+                        default=8080,
+                        help="The port to host test related files on")
+
         usage = """
                 Usage instructions for runtests.py.
                 %prog [options]
@@ -132,32 +138,23 @@ class PeptestOptions(OptionParser):
         return options 
 
 class Peptest():
-    profile = None
-    runner = None
-    manifest = None
-    server = None
-    child_pid = None
-    options = {}
-
     def __init__(self, options, **kwargs):
         self.options = options
+        self.child_pid = None
+        self.logger = mozlog.getLogger('PEP')
 
-    def start(self):
-        # ensure we are stopped
-        self.stop()
-        
         # Create the profile
-        self.profile = FirefoxProfile(profile=self.options.profilePath,
-                                  addons=['extension/pep.xpi'])
+        self.profile = self.profile_class(profile=self.options.profilePath,
+                                          addons=['extension/pep.xpi'])
+
+        
+        # Fork a server to serve the test related files
+        self.runServer()
 
         # Open and convert the manifest to json
         manifest = TestManifest()
         manifest.read(self.options.testPath)
        
-        # Setup environment
-        env = os.environ.copy()
-        env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
-
         # Create a manifest object to be read by the JS side
         manifestObj = {}
         manifestObj['tests'] = manifest.get()
@@ -167,6 +164,10 @@ class Peptest():
         jsonManifest.write(str(manifestObj).replace("'", "\""))
         jsonManifest.close()
 
+        # Setup environment
+        env = os.environ.copy()
+        env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
+
         # Construct the browser arguments
         cmdargs = []
         # TODO Make browserArgs a list
@@ -174,37 +175,55 @@ class Peptest():
         cmdargs.extend(['-pep-start', os.path.realpath(jsonManifest.name)])
         cmdargs.append('-pep-noisy')
         
-        # Fork a server to serve the tests
-        self.runServer()
 
         # run with managed process handler
-        self.runner = FirefoxRunner(profile=self.profile,
-                                binary=self.options.binary,
-                                cmdargs=cmdargs,
-                                env=env,
-                                process_class=PepProcess)
+        self.runner = self.runner_class(profile=self.profile,
+                                        binary=self.options.binary,
+                                        cmdargs=cmdargs,
+                                        env=env,
+                                        process_class=PepProcess)
+
+    def start(self):
+        self.logger.debug('Starting Peptest')
+        # ensure we are stopped
+        self.stop()
+       
+        # start firefox 
         self.runner.start()
         self.runner.wait()
+        self.stop()
 
     def runServer(self):
+        """
+        Start a basic HTML server to host
+        test related files.
+        """
         pId = os.fork()
         # if child process
         if pId == 0:
             os.chdir(os.path.dirname(self.options.testPath))
-            self.server = PepHTTPServer(8080)
-            print "Starting server on port 8080"
+            self.server = PepHTTPServer(self.options.serverPort)
+            self.logger.debug('Starting server on port ' + str(self.options.serverPort))
             self.server.serve_forever()
         else:
             self.child_pid = pId
     
     def stop(self):
         """Kill the app"""
+        # Stop the runner
         if self.runner is not None:
             self.runner.stop()
 
+        # Kill the server process
         if self.child_pid is not None:
-            print "child_process: " + str(self.child_pid)
+            # TODO Kill properly (?)
             os.kill(self.child_pid, signal.SIGKILL)
+
+        # Remove harness related files
+        #files = ['manifest.json']
+        #for f in files:
+        #    if os.path.exists(f):
+        #        os.remove(f)
 
 class FirefoxPeptest(Peptest):
     profile_class = FirefoxProfile
@@ -218,15 +237,29 @@ applications = {'firefox': FirefoxPeptest,
                 'thunderbird': ThunderbirdPeptest}
 
 def main():
+    """
+    Return codes
+    0 - success
+    1 - test failures
+    2 - fatal error
+    """
     parser = PeptestOptions()
     options, args = parser.parse_args()
     options = parser.verifyOptions(options)
     if options == None:
-        return 1
+        return 2
 
-    peptest = applications[options.app](options)
-    peptest.start()
-    peptest.stop()
+    # Setup the logging
+    logger = mozlog.getLogger('PEP', options.logFile)
+    if options.logLevel:
+        logger.setLevel(getattr(mozlog, options.logLevel, 'INFO'))
+
+    try:
+        peptest = applications[options.app](options)
+        peptest.start()
+    except Exception, e:
+        logger.error(e)
+        return 2
 
 if __name__ == '__main__':
     sys.exit(main())
