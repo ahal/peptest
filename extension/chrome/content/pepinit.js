@@ -52,16 +52,13 @@ var appContent;
 
 function pepInit(args) {
   try {
-    let manifest = args.manifest;
     if (args.noisy) noisy = true;
-    debugLine('in pepInit()');
-    debugLine('Manifest: ' + manifest + '\nNoisy: ' + noisy);
 
+    let manifest = args.manifest;
     let obj = loadManifest(manifest);
     let firstRun = true;
     appContent = document.getElementById('appcontent');
     if (appContent) {
-      debugLine('appContent - ' + appContent.localName);
       appContent.addEventListener('pageshow', function() {
         if (firstRun) {
           firstRun = false;
@@ -70,19 +67,16 @@ function pepInit(args) {
       });
     }
   } catch(e) {
-    Components.utils.reportError(e);
+    utils.dumpLine('ERROR ' + e.toString());
   }
 }
 
 function runTests(tests) {
-  debugLine('in runTests');
   for (let i = 0; i < tests.length; ++i) {
     runFile(tests[i]);
     // Sleep for half a second because tests will interfere with each other if loaded too quickly
     utils.sleep(500);
   }
-  debugLine('exiting runTests');
-  debugLine('Exiting pep');
 
   let app = Components.classes['@mozilla.org/toolkit/app-startup;1']
                       .getService(Components.interfaces.nsIAppStartup);
@@ -93,40 +87,34 @@ function runTests(tests) {
  * Takes a path to a js file and executes it in chrome scope
  */
 function runFile(test) {
-  debugLine('in runFile - ' + test.path);
-  // load a test module from a file and add some candy
+  // load a test module from a file and pass in pep API as scope
   let file = Components.classes['@mozilla.org/file/local;1']
                        .createInstance(Components.interfaces.nsILocalFile);
   file.initWithPath(test.path);
   let uri = gIOS.newFileURI(file).spec;
-
-  try {
-    utils.dumpLine('TEST-START ' + test.name);
-    let testScope = new pep.PepAPI(test.name);
-    let startTime = Date.now();
-    subscriptLoader.loadSubScript(uri, testScope);
-    let runTime = Date.now() - startTime;
-    utils.dumpLine('TEST-END ' + test.name + ' ' + runTime); 
-  } catch(e) {
-    Components.utils.reportError(e);
-  }
-  debugLine('exiting runFile');
+info
+  // initialize test scope
+  let testScope = new pep.PepAPI(test.name);
+  
+  utils.dumpLine('TEST-START ' + test.name);
+  let startTime = Date.now();
+  subscriptLoader.loadSubScript(uri, testScope);
+  let runTime = Date.now() - startTime;
+  utils.dumpLine('TEST-END ' + test.name + ' ' + runTime); 
 };
 
 /**
  * Takes in a path to a JSON manifest and returns its contents
  */
 function loadManifest(manifest) {
-  debugLine('win loadManifest');
   let data = utils.readFile(manifest);
   let json = data.join(' '); 
-  debugLine('exiting loadManifest - ' + data);
   return JSON.parse(json);
 };
 
 function MozmillMsgListener() {}
 MozmillMsgListener.prototype.update = function(msgType, obj) {
-  debugLine('MOZMILL - ' + msgType + ' : ' + JSON.stringify(obj)); 
+  utils.dumpLine('MOZMILL ' + msgType + ' ' + JSON.stringify(obj) + '\n'); 
 }
 msg.broker.addListener(new MozmillMsgListener());
 

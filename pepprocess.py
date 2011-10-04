@@ -65,7 +65,6 @@ class PepProcess(ProcessHandler):
 
         tokens = line.split(' ')
         if tokens[0] == 'PEP':
-            self.logger.debug(line)
             if tokens[1] == 'TEST-START':
                 self.currentTest = tokens[2].rstrip()
                 self.testPass = True
@@ -77,9 +76,15 @@ class PepProcess(ProcessHandler):
                                 ' | finished in: ' + tokens[3].rstrip() + ' ms')
                 self.currentTest = None
             elif tokens[1] == 'ACTION-START':
-                self.currentAction = tokens[3].rstrip() 
+                self.currentAction = tokens[3].rstrip()
+                self.logger.debug(tokens[1] + ' | ' + self.currentAction)
             elif tokens[1] == 'ACTION-END':
+                self.logger.debug(tokens[1] + ' | ' + self.currentAction)
                 self.currentAction = None
+            elif tokens[1] == 'ERROR':
+                self.logger.error(line.lstrip('PERO ').rstrip())
+            else:
+                self.logger.debug(line.lstrip('PE '))
         elif tokens[0] == 'MOZ_EVENT_TRACE' and self.currentAction is not None:
             self.logger.testFail(self.currentTest + ' | ' + self.currentAction +
                             ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')
