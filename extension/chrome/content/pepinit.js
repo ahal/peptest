@@ -103,8 +103,10 @@ function runFile(test) {
   try {
     utils.dumpLine('TEST-START ' + test.name);
     let testScope = new pep.PepAPI(test.name);
+    let startTime = Date.now();
     subscriptLoader.loadSubScript(uri, testScope);
-    utils.dumpLine('TEST-END ' + test.name);
+    let runTime = Date.now() - startTime;
+    utils.dumpLine('TEST-END ' + test.name + ' ' + runTime); 
   } catch(e) {
     Components.utils.reportError(e);
   }

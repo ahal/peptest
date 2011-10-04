@@ -167,6 +167,7 @@ class Peptest():
         # Setup environment
         env = os.environ.copy()
         env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
+        env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = '50'
 
         # Construct the browser arguments
         cmdargs = []
