@@ -1,3 +1,39 @@
+# ***** BEGIN LICENSE BLOCK *****
+# Version: MPL 1.1/GPL 2.0/LGPL 2.1 
+# 
+# The contents of this file are subject to the Mozilla Public License Version 
+# 1.1 (the "License"); you may not use this file except in compliance with 
+# the License. You may obtain a copy of the License at 
+# http://www.mozilla.org/MPL/ # 
+# Software distributed under the License is distributed on an "AS IS" basis, 
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License 
+# for the specific language governing rights and limitations under the 
+# License. 
+# 
+# The Original Code is Peptest. 
+# 
+# The Initial Developer of the Original Code is 
+#   Mozilla Corporation. 
+# Portions created by the Initial Developer are Copyright (C) 2011
+# the Initial Developer. All Rights Reserved. 
+# 
+# Contributor(s): 
+#   Andrew Halberstadt <halbersa@gmail.com>
+# 
+# Alternatively, the contents of this file may be used under the terms of 
+# either the GNU General Public License Version 2 or later (the "GPL"), or 
+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"), 
+# in which case the provisions of the GPL or the LGPL are applicable instead 
+# of those above. If you wish to allow use of your version of this file only 
+# under the terms of either the GPL or the LGPL, and not to allow others to 
+# use your version of this file under the terms of the MPL, indicate your 
+# decision by deleting the provisions above and replace them with the notice 
+# and other provisions required by the GPL or the LGPL. If you do not delete 
+# the provisions above, a recipient may use your version of this file under 
+# the terms of any one of the MPL, the GPL or the LGPL. 
+# 
+# ***** END LICENSE BLOCK ***** 
+
 from optparse import OptionParser
 from mozprofile import FirefoxProfile, ThunderbirdProfile
 from mozrunner import FirefoxRunner, ThunderbirdRunner
@@ -37,16 +73,16 @@ class PeptestOptions(OptionParser):
                         default=None,
                         help="per-test timeout in seconds")
 
-        LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "FATAL")
+        LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
         LEVEL_STRING = ", ".join(LOG_LEVELS)
-        self.add_option("--console-level",
-                        action="store", type="choice", dest="consoleLevel",
+        self.add_option("--log-level",
+                        action="store", type="choice", dest="logLevel",
                         choices=LOG_LEVELS, metavar="LEVEL",
                         default=None, 
-                        help="one of %s to determine the level of console "
+                        help="one of %s to determine the level of logging"
                              "logging" % LEVEL_STRING) 
 
-        self.add_option("--test-path",
+        self.add_option("-t", "--test-path",
                         action="store", type="string", dest="testPath",
                         default="",
                         help="path to the test manifest")
@@ -76,7 +112,7 @@ class PeptestOptions(OptionParser):
                         help="abort testing whenever an assertion is hit "
                              "(requires a debug build to be effective)")
 
-        self.add_option("--profile-path", action="store",
+        self.add_option("-p", "--profile-path", action="store",
                         type="string", dest="profilePath",
                         default=None,
                         help="Directory where the profile will be stored. "

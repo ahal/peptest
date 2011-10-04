@@ -45,8 +45,8 @@ var quit = {}; Components.utils.import('resource://stdlib/quit.js', quit);
 
 // the io service
 const gIOS = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
-const consoleService = Cc['@mozilla.org/consoleservice;1'].getService(Components.interfaces.nsIConsoleService);
-const subscriptLoader = Cc['@mozilla.org/moz/jssubscript-loader;1'].getService(Components.interfaces.mozIJSSubScriptLoader);
+const subscriptLoader = Cc['@mozilla.org/moz/jssubscript-loader;1']
+                        .getService(Components.interfaces.mozIJSSubScriptLoader);
 
 var noisy = false;
 var appContent;
@@ -79,6 +79,7 @@ function runTests(tests) {
   debugLine('in runTests');
   for (let i = 0; i < tests.length; ++i) {
     runFile(tests[i]);
+    // Sleep for half a second because tests will interfere with each other if loaded too quickly
     utils.sleep(500);
   }
   debugLine('exiting runTests');
