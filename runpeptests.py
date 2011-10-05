@@ -41,8 +41,11 @@ from manifestparser import TestManifest
 from pepserver import PepHTTPServer
 from pepprocess import PepProcess
 
+import peputils as utils
+import glob
 import mozlog
 import os
+import shutil
 import sys
 import signal
 
@@ -85,7 +88,6 @@ class PeptestOptions(OptionParser):
 
         self.add_option("-t", "--test-path",
                         action="store", type="string", dest="testPath",
-                        default="",
                         help="path to the test manifest")
 
         self.add_option("--setenv",
@@ -123,6 +125,11 @@ class PeptestOptions(OptionParser):
                         action="store", type="int", dest="serverPort",
                         default=8080,
                         help="The port to host test related files on")
+        self.add_option("--symbols-path",
+                        action = "store", type = "string", dest = "symbolsPath",
+                        default = None,
+                        help = "absolute path to directory containing breakpad symbols, "
+                               "or the URL of a zip file containing symbols") 
 
         usage = """
                 Usage instructions for runtests.py.
@@ -168,6 +175,7 @@ class Peptest():
         env = os.environ.copy()
         env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
         env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = '50'
+        env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
 
         # Construct the browser arguments
         cmdargs = []
@@ -186,12 +194,11 @@ class Peptest():
 
     def start(self):
         self.logger.debug('Starting Peptest')
-        # ensure we are stopped
-        self.stop()
        
         # start firefox 
         self.runner.start()
         self.runner.wait()
+        self.checkForCrashes()
         self.stop()
 
     def runServer(self):
@@ -221,10 +228,66 @@ class Peptest():
             os.kill(self.child_pid, signal.SIGKILL)
 
         # Remove harness related files
-        #files = ['manifest.json']
-        #for f in files:
-        #    if os.path.exists(f):
-        #        os.remove(f)
+        files = ['manifest.json']
+        for f in files:
+            if os.path.exists(f):
+                os.remove(f)
+
+        if os.path.exists('symbols'):
+            shutil.rmtree('symbols')
+
+        # Delete any minidumps that may have been created
+        dumpDir = os.path.join(self.profile.profile, 'minidumps')
+        if self.options.profilePath and os.path.exists(dumpDir):
+            shutil.rmtree(dumpDir)
+
+    def checkForCrashes(self, testName=None):
+        """
+        Detects when a crash occurs and prints the output from
+        MINIDUMP_STACKWALK. Returns true if crash detected,
+        otherwise false.
+        """
+        stackwalkPath = os.environ.get('MINIDUMP_STACKWALK', None)
+        print "stackwalkPath: " + str(stackwalkPath)
+        # try to get the caller's filename if no test name is given
+        if testName is None:
+            try:
+                testName = os.path.basename(sys._getframe(1).f_code.co_filename)
+            except:
+                testName = "unknown"
+
+        foundCrash = False
+        dumpDir = os.path.join(self.profile.profile, 'minidumps')
+        dumps = glob.glob(os.path.join(dumpDir, '*.dmp'))
+
+        symbolsPath = self.options.symbolsPath
+        if utils.isURL(symbolsPath):
+            bundle = utils.download(symbolsPath)
+            symbolsPath = os.path.join(os.path.dirname(bundle), 'symbols')
+            utils.extract(bundle, symbolsPath, delete=True)
+        
+        for d in dumps:
+            import subprocess
+            foundCrash = True
+            self.logger.info("PROCESS-CRASH | %s | application crashed (minidump found)", testName)
+            print "Crash dump filename: " + d
+            if symbolsPath and stackwalkPath and os.path.exists(stackwalkPath):
+                p = subprocess.Popen([stackwalkPath, d, symbolsPath],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+                (out, err) = p.communicate()
+                if len(out) > 3:
+                    # minidump_stackwalk is chatty, so ignore stderr when it succeeds.
+                    print out
+                else:
+                    print "stderr from minidump_stackwalk:"
+                    print err
+                if p.returncode != 0:
+                    print "minidump_stackwalk exited with return code %d" % p.returncode
+            else:
+                self.logger.warning('No symbols_path or stackwalk path specified, can\'t process dump')
+                break
+        return foundCrash
 
 class FirefoxPeptest(Peptest):
     profile_class = FirefoxProfile
@@ -257,9 +320,9 @@ def main():
 
     try:
         peptest = applications[options.app](options)
-        peptest.start()
+        return peptest.start()
     except Exception, e:
-        logger.error(e)
+        logger.error(str(type(e)) + ' ' + str(e))
         return 2
 
 if __name__ == '__main__':

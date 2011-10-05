@@ -90,7 +90,7 @@ function runFile(test) {
                        .createInstance(Components.interfaces.nsILocalFile);
   file.initWithPath(test.path);
   let uri = gIOS.newFileURI(file).spec;
-info
+  
   // initialize test scope
   let testScope = new pep.PepAPI(test.name);
   
