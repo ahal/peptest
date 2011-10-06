@@ -35,8 +35,11 @@
 # ***** END LICENSE BLOCK ***** 
 
 from mozprocess import ProcessHandler
+from pepresults import Results
 import mozlog
 import os
+
+results = Results()
 
 class PepProcess(ProcessHandler):
     """
@@ -51,9 +54,6 @@ class PepProcess(ProcessHandler):
         ProcessHandler.__init__(self, cmd, args=args, cwd=cwd, env=env,
                                 ignore_children=ignore_children, **kwargs)
         
-        self.currentTest = None
-        self.currentAction = None 
-        self.testPass = True
         self.logger = mozlog.getLogger('PEP')
 
     def processOutputLine(self, line):
@@ -62,30 +62,29 @@ class PepProcess(ProcessHandler):
         Responsible for determining which output lines are relevant
         and writing them to a log
         """
-
         tokens = line.split(' ')
         if tokens[0] == 'PEP':
             if tokens[1] == 'TEST-START':
-                self.currentTest = tokens[2].rstrip()
-                self.testPass = True
-                self.logger.testStart(self.currentTest)
+                results.currentTest = tokens[2].rstrip()
+                results.fails[results.currentTest] = []
+                self.logger.testStart(results.currentTest)
             elif tokens[1] == 'TEST-END':
-                if self.testPass:
-                    self.logger.testPass(self.currentTest)
-                self.logger.testEnd(self.currentTest +
-                                ' | finished in: ' + tokens[3].rstrip() + ' ms')
-                self.currentTest = None
+                if len(results.fails[results.currentTest]) == 0:
+                    self.logger.testPass(results.currentTest)
+                self.logger.testEnd(results.currentTest +
+                                    ' | finished in: ' + tokens[3].rstrip() + ' ms')
+                results.currentTest = None
             elif tokens[1] == 'ACTION-START':
-                self.currentAction = tokens[3].rstrip()
-                self.logger.debug(tokens[1] + ' | ' + self.currentAction)
+                results.currentAction = tokens[3].rstrip()
+                self.logger.debug(tokens[1] + ' | ' + results.currentAction)
             elif tokens[1] == 'ACTION-END':
-                self.logger.debug(tokens[1] + ' | ' + self.currentAction)
-                self.currentAction = None
+                self.logger.debug(tokens[1] + ' | ' + results.currentAction)
+                results.currentAction = None
             elif tokens[1] == 'ERROR':
                 self.logger.error(line.lstrip('PERO ').rstrip())
             else:
                 self.logger.debug(line.lstrip('PE '))
-        elif tokens[0] == 'MOZ_EVENT_TRACE' and self.currentAction is not None:
-            self.logger.testFail(self.currentTest + ' | ' + self.currentAction +
+        elif tokens[0] == 'MOZ_EVENT_TRACE' and results.currentAction is not None:
+            self.logger.testFail(results.currentTest + ' | ' + results.currentAction +
                             ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')
-            self.testPass = False
+            results.fails[results.currentTest].append(tokens[3].rstrip())

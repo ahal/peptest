@@ -40,6 +40,7 @@ from mozrunner import FirefoxRunner, ThunderbirdRunner
 from manifestparser import TestManifest
 from pepserver import PepHTTPServer
 from pepprocess import PepProcess
+from pepresults import Results
 
 import peputils as utils
 import glob
@@ -48,6 +49,8 @@ import os
 import shutil
 import sys
 import signal
+
+results = Results()
 
 class PeptestOptions(OptionParser):
     def __init__(self, **kwargs):
@@ -198,8 +201,12 @@ class Peptest():
         # start firefox 
         self.runner.start()
         self.runner.wait()
-        self.checkForCrashes()
+        crashed = self.checkForCrashes(results.currentTest)
         self.stop()
+        
+        if crashed or results.hasFails():
+            return 1
+        return 0
 
     def runServer(self):
         """
@@ -248,7 +255,6 @@ class Peptest():
         otherwise false.
         """
         stackwalkPath = os.environ.get('MINIDUMP_STACKWALK', None)
-        print "stackwalkPath: " + str(stackwalkPath)
         # try to get the caller's filename if no test name is given
         if testName is None:
             try:
@@ -261,17 +267,22 @@ class Peptest():
         dumps = glob.glob(os.path.join(dumpDir, '*.dmp'))
 
         symbolsPath = self.options.symbolsPath
-        if utils.isURL(symbolsPath):
-            bundle = utils.download(symbolsPath)
-            symbolsPath = os.path.join(os.path.dirname(bundle), 'symbols')
-            utils.extract(bundle, symbolsPath, delete=True)
         
         for d in dumps:
             import subprocess
             foundCrash = True
             self.logger.info("PROCESS-CRASH | %s | application crashed (minidump found)", testName)
             print "Crash dump filename: " + d
+            
+            # only proceed if a symbols path and stackwalk path were specified
             if symbolsPath and stackwalkPath and os.path.exists(stackwalkPath):
+                # if symbolsPath is a url, download and extract the zipfile
+                if utils.isURL(symbolsPath):
+                    bundle = utils.download(symbolsPath)
+                    symbolsPath = os.path.join(os.path.dirname(bundle), 'symbols')
+                    utils.extract(bundle, symbolsPath, delete=True)
+
+                # run minidump_stackwalk
                 p = subprocess.Popen([stackwalkPath, d, symbolsPath],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
