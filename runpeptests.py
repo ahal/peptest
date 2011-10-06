@@ -70,11 +70,6 @@ class PeptestOptions(OptionParser):
                         metavar="FILE", default=None,
                         help="file to which logging occurs")
 
-        self.add_option("--autorun",
-                        action="store_true", dest="autorun",
-                        default=False,
-                        help="start running tests when the application starts")
-
         self.add_option("--timeout",
                         type="int", dest="timeout",
                         default=None,
@@ -128,6 +123,7 @@ class PeptestOptions(OptionParser):
                         action="store", type="int", dest="serverPort",
                         default=8080,
                         help="The port to host test related files on")
+
         self.add_option("--symbols-path",
                         action = "store", type = "string", dest = "symbolsPath",
                         default = None,
@@ -157,7 +153,6 @@ class Peptest():
         self.profile = self.profile_class(profile=self.options.profilePath,
                                           addons=['extension/pep.xpi'])
 
-        
         # Fork a server to serve the test related files
         self.runServer()
 
@@ -176,6 +171,7 @@ class Peptest():
 
         # Setup environment
         env = os.environ.copy()
+        env.extend(self.options.environment)
         env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
         env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = '50'
         env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
