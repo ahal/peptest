@@ -35,8 +35,8 @@
 # ***** END LICENSE BLOCK ***** 
 
 from optparse import OptionParser
-from mozprofile import FirefoxProfile, ThunderbirdProfile
-from mozrunner import FirefoxRunner, ThunderbirdRunner
+from mozprofile import FirefoxProfile, ThunderbirdProfile, Profile
+from mozrunner import FirefoxRunner, ThunderbirdRunner, Runner
 from manifestparser import TestManifest
 from pepserver import PepHTTPServer
 from pepprocess import PepProcess
@@ -146,45 +146,63 @@ class PeptestOptions(OptionParser):
 
     def verifyOptions(self, options):
         """ verify correct options and cleanup paths """
+        # TODO Verify all command line args
         if not options.testPath:
             print "error: --test-path must specify the path to a test or test manifest"
             return None
         return options 
 
 class Peptest():
+    """
+    Peptest
+    Runs and logs tests designed to test responsiveness
+    """
+    profile_class = Profile
+    runner_class = Runner
+
     def __init__(self, options, **kwargs):
         self.options = options
         self.child_pid = None
         self.logger = mozlog.getLogger('PEP')
 
-        # Create the profile
+        # create the profile
         self.profile = self.profile_class(profile=self.options.profilePath,
                                           addons=['extension/pep.xpi'])
 
-        # Fork a server to serve the test related files
+        # fork a server to serve the test related files
         if self.options.serverPath:
             self.runServer()
 
-        # Open and convert the manifest to json
-        manifest = TestManifest()
-        manifest.read(self.options.testPath)
+        tests = []
+        if self.options.testPath.endswith('.js'):
+            # a single test file was passed in
+            testObj = {}
+            testObj['path'] = os.path.realpath(self.options.testPath)
+            testObj['name'] = os.path.basename(self.options.testPath)
+            tests.append(testObj)
+        else:
+            # a test manifest was passed in
+            # open and convert the manifest to json
+            manifest = TestManifest()
+            manifest.read(self.options.testPath)
+            tests = manifest.get()
        
-        # Create a manifest object to be read by the JS side
+        # create a manifest object to be read by the JS side
         manifestObj = {}
-        manifestObj['tests'] = manifest.get()
+        manifestObj['tests'] = tests
         
-        # Write manifest to a JSON file 
+        # write manifest to a JSON file 
         jsonManifest = open('manifest.json', 'w')
         jsonManifest.write(str(manifestObj).replace("'", "\""))
         jsonManifest.close()
 
-        # Setup environment
+        # setup environment
         env = os.environ.copy()
         env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
         env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = '50'
         env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
 
-        # Construct the browser arguments
+        # construct the browser arguments
         cmdargs = []
         # TODO Make browserArgs a list
         cmdargs.extend(self.options.browserArgs)
@@ -232,16 +250,16 @@ class Peptest():
     
     def stop(self):
         """Kill the app"""
-        # Stop the runner
+        # stop the runner
         if self.runner is not None:
             self.runner.stop()
 
-        # Kill the server process
+        # kill the server process
         if self.child_pid is not None:
             # TODO Kill properly (?)
             os.kill(self.child_pid, signal.SIGKILL)
 
-        # Remove harness related files
+        # remove harness related files
         files = ['manifest.json']
         for f in files:
             if os.path.exists(f):
@@ -250,7 +268,7 @@ class Peptest():
         if os.path.exists('symbols'):
             shutil.rmtree('symbols')
 
-        # Delete any minidumps that may have been created
+        # delete any minidumps that may have been created
         dumpDir = os.path.join(self.profile.profile, 'minidumps')
         if self.options.profilePath and os.path.exists(dumpDir):
             shutil.rmtree(dumpDir)
@@ -331,7 +349,7 @@ def main():
     if options == None:
         return 2
 
-    # Setup the logging
+    # setup the logging
     logger = mozlog.getLogger('PEP', options.logFile)
     if options.logLevel:
         logger.setLevel(getattr(mozlog, options.logLevel, 'INFO'))
