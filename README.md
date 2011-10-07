@@ -14,6 +14,7 @@ but currently live in three different locations.
 - Create a new virtualenv and install the mozrunner, mozprofile, mozprocess, mozinfo, mozlog and manifestdestiny packages into it (run 'python setup.py install' for each).
 - Clone the Peptest repo at github.com/ahal/peptest
 - Run the command (use --help for a full list of commands)
+
         python runpeptests.py --binary <path_to_binary> --profile-path <path_to_profile> --test-path <path_to_test_manifest> --log-file <path_to_logfile>
 
 
