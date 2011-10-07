@@ -171,7 +171,6 @@ class Peptest():
 
         # Setup environment
         env = os.environ.copy()
-        env.extend(self.options.environment)
         env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
         env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = '50'
         env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'

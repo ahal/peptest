@@ -81,6 +81,7 @@ class PepProcess(ProcessHandler):
                 self.logger.debug(tokens[1] + ' | ' + results.currentAction)
                 results.currentAction = None
             elif tokens[1] == 'ERROR':
+                # TODO Don't use lstrip
                 self.logger.error(line.lstrip('PERO ').rstrip())
             else:
                 self.logger.debug(line.lstrip('PE '))
