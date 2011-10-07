@@ -167,7 +167,7 @@ class Peptest():
 
         # create the profile
         self.profile = self.profile_class(profile=self.options.profilePath,
-                                          addons=['extension/pep.xpi'])
+                                          addons=[os.path.join('extension', 'pep.xpi')])
 
         # fork a server to serve the test related files
         if self.options.serverPath:
@@ -209,7 +209,6 @@ class Peptest():
         cmdargs.extend(['-pep-start', os.path.realpath(jsonManifest.name)])
         cmdargs.append('-pep-noisy')
         
-
         # run with managed process handler
         self.runner = self.runner_class(profile=self.profile,
                                         binary=self.options.binary,

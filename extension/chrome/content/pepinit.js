@@ -73,7 +73,7 @@ function runTests(tests) {
     // Sleep for half a second because tests will interfere with each other if loaded too quickly
     utils.sleep(500);
   }
-
+  // quit the application
   let app = Components.classes['@mozilla.org/toolkit/app-startup;1']
                       .getService(Components.interfaces.nsIAppStartup);
   app.quit(Components.interfaces.nsIAppStartup.eForceQuit);
