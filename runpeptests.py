@@ -55,10 +55,14 @@ results = Results()
 class PeptestOptions(OptionParser):
     def __init__(self, **kwargs):
         OptionParser.__init__(self, **kwargs)
+        self.add_option("-t", "--test-path",
+                        action="store", type="string", dest="testPath",
+                        help="path to the test manifest")
+
         self.add_option("-b", "--binary",
                         action="store", type="string", dest="binary",
                         help="absolute path to application, overriding default")
-
+        
         self.add_option("--app",
                         action="store", type="string", dest="app",
                         default="firefox",
@@ -83,10 +87,6 @@ class PeptestOptions(OptionParser):
                         default=None, 
                         help="one of %s to determine the level of logging"
                              "logging" % LEVEL_STRING) 
-
-        self.add_option("-t", "--test-path",
-                        action="store", type="string", dest="testPath",
-                        help="path to the test manifest")
 
         self.add_option("--setenv",
                         action="append", type="string", dest="environment",
@@ -116,13 +116,19 @@ class PeptestOptions(OptionParser):
         self.add_option("-p", "--profile-path", action="store",
                         type="string", dest="profilePath",
                         default=None,
-                        help="Directory where the profile will be stored. "
-                             "This directory will be deleted after the tests are finished")
+                        help="path to the profile to use. "
+                             "If none specified, a temporary profile is created")
 
         self.add_option("--server-port",
                         action="store", type="int", dest="serverPort",
                         default=8080,
                         help="The port to host test related files on")
+
+        self.add_option("--server-path",
+                        action="store", type="string", dest="serverPath",
+                        default=None,
+                        help="Starts a basic HTTP server rooted at the specified "
+                             "directory. Can be used for hosting test related files")
 
         self.add_option("--symbols-path",
                         action = "store", type = "string", dest = "symbolsPath",
@@ -133,14 +139,16 @@ class PeptestOptions(OptionParser):
         usage = """
                 Usage instructions for runtests.py.
                 %prog [options]
-                All arguments are optional.
+                All arguments except --test-path are optional.
                 """
 
         self.set_usage(usage)
 
     def verifyOptions(self, options):
         """ verify correct options and cleanup paths """
-        # TODO
+        if not options.testPath:
+            print "error: --test-path must specify the path to a test or test manifest"
+            return None
         return options 
 
 class Peptest():
@@ -154,7 +162,8 @@ class Peptest():
                                           addons=['extension/pep.xpi'])
 
         # Fork a server to serve the test related files
-        self.runServer()
+        if self.options.serverPath:
+            self.runServer()
 
         # Open and convert the manifest to json
         manifest = TestManifest()
@@ -208,10 +217,13 @@ class Peptest():
         Start a basic HTML server to host
         test related files.
         """
+        if not self.options.serverPath:
+            self.logger.warning('Can\'t start HTTP server, --server-path not specified')
+            return
         pId = os.fork()
         # if child process
         if pId == 0:
-            os.chdir(os.path.dirname(self.options.testPath))
+            os.chdir(os.path.dirname(self.options.serverPath))
             self.server = PepHTTPServer(self.options.serverPort)
             self.logger.debug('Starting server on port ' + str(self.options.serverPort))
             self.server.serve_forever()
