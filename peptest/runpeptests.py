@@ -51,6 +51,7 @@ import sys
 import signal
 
 results = Results()
+here = os.path.dirname(os.path.realpath(__file__))
 
 class PeptestOptions(OptionParser):
     def __init__(self, **kwargs):
@@ -167,7 +168,7 @@ class Peptest():
 
         # create the profile
         self.profile = self.profile_class(profile=self.options.profilePath,
-                                          addons=[os.path.join('extension', 'pep.xpi')])
+                                          addons=[os.path.join(here, 'extension')])
 
         # fork a server to serve the test related files
         if self.options.serverPath:
@@ -192,7 +193,7 @@ class Peptest():
         manifestObj['tests'] = tests
         
         # write manifest to a JSON file 
-        jsonManifest = open('manifest.json', 'w')
+        jsonManifest = open(os.path.join(here, 'manifest.json'), 'w')
         jsonManifest.write(str(manifestObj).replace("'", "\""))
         jsonManifest.close()
 
@@ -261,11 +262,11 @@ class Peptest():
         # remove harness related files
         files = ['manifest.json']
         for f in files:
-            if os.path.exists(f):
-                os.remove(f)
+            if os.path.exists(os.path.join(here, f)):
+                os.remove(os.path.join(here, f))
 
-        if os.path.exists('symbols'):
-            shutil.rmtree('symbols')
+        if os.path.exists(os.path.join(here, 'symbols')):
+            shutil.rmtree(os.path.join('symbols'))
 
         # delete any minidumps that may have been created
         dumpDir = os.path.join(self.profile.profile, 'minidumps')
@@ -302,7 +303,7 @@ class Peptest():
             if symbolsPath and stackwalkPath and os.path.exists(stackwalkPath):
                 # if symbolsPath is a url, download and extract the zipfile
                 if utils.isURL(symbolsPath):
-                    bundle = utils.download(symbolsPath)
+                    bundle = utils.download(symbolsPath, here)
                     symbolsPath = os.path.join(os.path.dirname(bundle), 'symbols')
                     utils.extract(bundle, symbolsPath, delete=True)
 
