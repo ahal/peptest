@@ -27,9 +27,7 @@ setup(name='peptest',
       install_requires=dependencies,
       entry_points="""
       # -*- Entry points: -*-
-
-      
+      [console_scripts]
+      peptest = peptest.runpeptests:main
       """,
       )
-      
-

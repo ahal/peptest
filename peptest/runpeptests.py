@@ -336,7 +336,7 @@ class ThunderbirdPeptest(Peptest):
 applications = {'firefox': FirefoxPeptest,
                 'thunderbird': ThunderbirdPeptest}
 
-def main():
+def main(args=sys.argv[1:]):
     """
     Return codes
     0 - success
