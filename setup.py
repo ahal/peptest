@@ -9,7 +9,10 @@ except IOError:
 
 version = "0.0"
 
-dependencies = ['mozprofile', 'mozprocess', 'mozrunner', 'mozlog']
+dependencies = ['mozprofile',
+                'mozprocess',
+                'mozrunner >= 3.0b3',
+                'mozlog']
 
 setup(name='peptest',
       version=version,
