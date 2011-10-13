@@ -70,13 +70,17 @@ function pepInit(args) {
 function runTests(tests) {
   for (let i = 0; i < tests.length; ++i) {
     runFile(tests[i]);
-    // Sleep for half a second because tests will interfere with each other if loaded too quickly
-    utils.sleep(500);
+    // Sleep for a second because tests will interfere with each other if loaded too quickly
+    utils.sleep(1000);
   }
   // quit the application
+  /*
   let app = Components.classes['@mozilla.org/toolkit/app-startup;1']
                       .getService(Components.interfaces.nsIAppStartup);
   app.quit(Components.interfaces.nsIAppStartup.eForceQuit);
+  */
+  subscriptLoader.loadSubScript('resource://pep/quit.js');
+  goQuitApplication();
 }
 
 /**

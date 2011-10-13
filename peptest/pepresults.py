@@ -52,9 +52,19 @@ class Results(object):
         self.currentTest = None
         self.currentAction = None
         self.fails = {}
+        self.events = []
 
     def hasFails(self):
         for k, v in self.fails.iteritems():
             if len(v) > 0:
                 return True
         return False
+    
+    def getFailsForAction(self, action):
+        """
+        Accepts an action and returns a list of
+        failures that occured during the action
+        """
+        return [(t, v) for (t, v) in sorted(self.events, key=lambda obj: obj[0])
+                            if t > action['start_time'] if t < action['end_time']]
+    

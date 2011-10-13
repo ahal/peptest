@@ -200,6 +200,7 @@ class Peptest():
         # setup environment
         env = os.environ.copy()
         env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
+        #env['MOZ_INSTRUMENT_EVENT_LOOP_OUTPUT'] = 'EventTracer.log'
         env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = '50'
         env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
 
@@ -209,6 +210,7 @@ class Peptest():
         cmdargs.extend(self.options.browserArgs)
         cmdargs.extend(['-pep-start', os.path.realpath(jsonManifest.name)])
         cmdargs.append('-pep-noisy')
+        #cmdargs.append('-console')
         
         # run with managed process handler
         self.runner = self.runner_class(profile=self.profile,
@@ -222,7 +224,7 @@ class Peptest():
        
         # start firefox 
         self.runner.start()
-        self.runner.wait()
+        self.runner.wait(outputTimeout=3)
         crashed = self.checkForCrashes(results.currentTest)
         self.stop()
         
@@ -354,10 +356,11 @@ def main():
     if options.logLevel:
         logger.setLevel(getattr(mozlog, options.logLevel, 'INFO'))
 
-    try:
+    #try:
+    if True:
         peptest = applications[options.app](options)
         return peptest.start()
-    except Exception, e:
+    #except Exception, e:
         logger.error(str(type(e)) + ' ' + str(e))
         return 2
 
