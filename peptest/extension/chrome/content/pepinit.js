@@ -71,6 +71,7 @@ function runTests(tests) {
     // TODO Figure out why they interfere with each other
     utils.sleep(1000);
   }
+  utils.dumpLine('FINISHED');
   // quit the application
   subscriptLoader.loadSubScript('resource://pep/quit.js')
   goQuitApplication();
@@ -85,15 +86,20 @@ function runFile(test) {
                        .createInstance(Components.interfaces.nsILocalFile);
   file.initWithPath(test.path);
   let uri = gIOS.newFileURI(file).spec;
-  
-  // initialize test scope
-  let testScope = new pep.PepAPI(test.name);
-  
-  utils.dumpLine('TEST-START ' + test.name);
-  let startTime = Date.now();
-  subscriptLoader.loadSubScript(uri, testScope);
-  let runTime = Date.now() - startTime;
-  utils.dumpLine('TEST-END ' + test.name + ' ' + runTime); 
+ 
+  try {
+    // initialize test scope
+    let testScope = new pep.PepAPI(test.name);
+    
+    utils.dumpLine('TEST-START ' + test.name);
+    let startTime = Date.now();
+    subscriptLoader.loadSubScript(uri, testScope);
+    let runTime = Date.now() - startTime;
+    utils.dumpLine('TEST-END ' + test.name + ' ' + runTime);
+  } catch (e) {
+      utils.dumpLine('ERROR ' + test.name + ' | ' + e);
+  }
+
 };
 
 /**
