@@ -53,105 +53,6 @@ import signal
 results = Results()
 here = os.path.dirname(os.path.realpath(__file__))
 
-class PeptestOptions(OptionParser):
-    def __init__(self, **kwargs):
-        OptionParser.__init__(self, **kwargs)
-        self.add_option("-t", "--test-path",
-                        action="store", type="string", dest="testPath",
-                        help="path to the test manifest")
-
-        self.add_option("-b", "--binary",
-                        action="store", type="string", dest="binary",
-                        help="absolute path to application, overriding default")
-        
-        self.add_option("--app",
-                        action="store", type="string", dest="app",
-                        default="firefox",
-                        help="app to run the tests on (firefox or thunderbird) "
-                             "defaults to firefox")
-        
-        self.add_option("--log-file",
-                        action="store", type="string", dest="logFile",
-                        metavar="FILE", default=None,
-                        help="file to which logging occurs")
-
-        self.add_option("--timeout",
-                        type="int", dest="timeout",
-                        default=None,
-                        help="per-test timeout in seconds")
-
-        LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
-        LEVEL_STRING = ", ".join(LOG_LEVELS)
-        self.add_option("--log-level",
-                        action="store", type="choice", dest="logLevel",
-                        choices=LOG_LEVELS, metavar="LEVEL",
-                        default=None, 
-                        help="one of %s to determine the level of logging"
-                             "logging" % LEVEL_STRING) 
-
-        self.add_option("--setenv",
-                        action="append", type="string", dest="environment",
-                        metavar="NAME=VALUE", default=[],
-                        help="sets the given variable in the application's "
-                             "environment")
-
-        self.add_option("--browser-arg",
-                        action="append",  type="string", dest="browserArgs",
-                        metavar="ARG", default=[],
-                        help="provides an argument to the test application")
-
-        self.add_option("--leak-threshold",
-                        action="store", type="int", dest="leakThreshold",
-                        metavar="THRESHOLD", default=0,
-                        help="fail if the number of bytes leaked through "
-                             "refcounted objects (or bytes in classes with "
-                             "MOZ_COUNT_CTOR and MOZ_COUNT_DTOR) is greater "
-                             "than the given number")
-
-        self.add_option("--fatal-assertions",
-                        action="store_true", dest="fatalAssertions",
-                        default=False,
-                        help="abort testing whenever an assertion is hit "
-                             "(requires a debug build to be effective)")
-
-        self.add_option("-p", "--profile-path", action="store",
-                        type="string", dest="profilePath",
-                        default=None,
-                        help="path to the profile to use. "
-                             "If none specified, a temporary profile is created")
-
-        self.add_option("--server-port",
-                        action="store", type="int", dest="serverPort",
-                        default=8080,
-                        help="The port to host test related files on")
-
-        self.add_option("--server-path",
-                        action="store", type="string", dest="serverPath",
-                        default=None,
-                        help="Starts a basic HTTP server rooted at the specified "
-                             "directory. Can be used for hosting test related files")
-
-        self.add_option("--symbols-path",
-                        action = "store", type = "string", dest = "symbolsPath",
-                        default = None,
-                        help = "absolute path to directory containing breakpad symbols, "
-                               "or the URL of a zip file containing symbols") 
-
-        usage = """
-                Usage instructions for runtests.py.
-                %prog [options]
-                All arguments except --test-path are optional.
-                """
-
-        self.set_usage(usage)
-
-    def verifyOptions(self, options):
-        """ verify correct options and cleanup paths """
-        # TODO Verify all command line args
-        if not options.testPath:
-            print "error: --test-path must specify the path to a test or test manifest"
-            return None
-        return options 
 
 class Peptest():
     """
@@ -175,6 +76,7 @@ class Peptest():
             self.runServer()
 
         tests = []
+        # TODO is there a better way of doing this?
         if self.options.testPath.endswith('.js'):
             # a single test file was passed in
             testObj = {}
@@ -200,7 +102,8 @@ class Peptest():
         # setup environment
         env = os.environ.copy()
         env['MOZ_INSTRUMENT_EVENT_LOOP'] = '1'
-        env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = '50'
+        env['MOZ_INSTRUMENT_EVENT_LOOP_THRESHOLD'] = str(options.tracerThreshold)
+        env['MOZ_INSTRUMENT_EVENT_LOOP_INTERVAL'] = str(options.tracerInterval)
         env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
 
         # construct the browser arguments
@@ -222,7 +125,7 @@ class Peptest():
        
         # start firefox 
         self.runner.start()
-        self.runner.wait()
+        self.runner.wait(outputTimeout=self.options.timeout)
         crashed = self.checkForCrashes(results.currentTest)
         self.stop()
         
@@ -335,6 +238,120 @@ class ThunderbirdPeptest(Peptest):
 
 applications = {'firefox': FirefoxPeptest,
                 'thunderbird': ThunderbirdPeptest}
+
+
+class PeptestOptions(OptionParser):
+    def __init__(self, **kwargs):
+        OptionParser.__init__(self, **kwargs)
+        self.add_option("-t", "--test-path",
+                        action="store", type="string", dest="testPath",
+                        help="path to the test manifest")
+
+        self.add_option("-b", "--binary",
+                        action="store", type="string", dest="binary",
+                        help="absolute path to application, overriding default")
+        
+        self.add_option("--app",
+                        action="store", type="string", dest="app",
+                        default="firefox",
+                        help="app to run the tests on (firefox or thunderbird). "
+                             "defaults to firefox")
+        
+        self.add_option("--log-file",
+                        action="store", type="string", dest="logFile",
+                        metavar="FILE", default=None,
+                        help="file to which logging occurs")
+
+        self.add_option("--timeout",
+                        type="int", dest="timeout",
+                        default=None,
+                        help="global timeout in seconds")
+
+        LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
+        LEVEL_STRING = ", ".join(LOG_LEVELS)
+        self.add_option("--log-level",
+                        action="store", type="choice", dest="logLevel",
+                        choices=LOG_LEVELS, metavar="LEVEL",
+                        default=None, 
+                        help="one of %s to determine the level of logging"
+                             "logging" % LEVEL_STRING) 
+
+        self.add_option("--setenv",
+                        action="append", type="string", dest="environment",
+                        metavar="NAME=VALUE", default=[],
+                        help="sets the given variable in the application's "
+                             "environment")
+
+        self.add_option("--browser-arg",
+                        action="append",  type="string", dest="browserArgs",
+                        metavar="ARG", default=[],
+                        help="provides an argument to the test application")
+
+        self.add_option("--leak-threshold",
+                        action="store", type="int", dest="leakThreshold",
+                        metavar="THRESHOLD", default=0,
+                        help="fail if the number of bytes leaked through "
+                             "refcounted objects (or bytes in classes with "
+                             "MOZ_COUNT_CTOR and MOZ_COUNT_DTOR) is greater "
+                             "than the given number")
+
+        self.add_option("--fatal-assertions",
+                        action="store_true", dest="fatalAssertions",
+                        default=False,
+                        help="abort testing whenever an assertion is hit "
+                             "(requires a debug build to be effective)")
+
+        self.add_option("-p", "--profile-path", action="store",
+                        type="string", dest="profilePath",
+                        default=None,
+                        help="path to the profile to use. "
+                             "If none specified, a temporary profile is created")
+
+        self.add_option("--server-port",
+                        action="store", type="int", dest="serverPort",
+                        default=8080,
+                        help="The port to host test related files on")
+
+        self.add_option("--server-path",
+                        action="store", type="string", dest="serverPath",
+                        default=None,
+                        help="Starts a basic HTTP server rooted at the specified "
+                             "directory. Can be used for hosting test related files")
+
+        self.add_option("--symbols-path",
+                        action = "store", type = "string", dest = "symbolsPath",
+                        default = None,
+                        help = "absolute path to directory containing breakpad symbols, "
+                               "or the URL of a zip file containing symbols")
+        
+        self.add_option("--tracer-threshold",
+                        action="store", type="int", dest="tracerThreshold",
+                        default=50,
+                        help="time in milliseconds at which point an event is "
+                             "considered unresponsive. Default to 50ms")
+
+        self.add_option("--tracer-interval",
+                        action="store", type="int", dest="tracerInterval",
+                        default=10,
+                        help="interval in milliseconds that tracer events are "
+                             "sent through the event loop. Default to 10ms")
+
+        usage = """
+                Usage instructions for runtests.py.
+                %prog [options]
+                All arguments except --test-path are optional.
+                """
+
+        self.set_usage(usage)
+
+    def verifyOptions(self, options):
+        """ verify correct options and cleanup paths """
+        # TODO Verify all command line args
+        if not options.testPath:
+            print "error: --test-path must specify the path to a test or test manifest"
+            return None
+        return options 
+
 
 def main(args=sys.argv[1:]):
     """
