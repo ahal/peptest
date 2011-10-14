@@ -111,7 +111,6 @@ class Peptest():
         # TODO Make browserArgs a list
         cmdargs.extend(self.options.browserArgs)
         cmdargs.extend(['-pep-start', os.path.realpath(jsonManifest.name)])
-        cmdargs.append('-pep-noisy')
         
         # run with managed process handler
         self.runner = self.runner_class(profile=self.profile,

@@ -45,13 +45,10 @@ const gIOS = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService)
 const subscriptLoader = Cc['@mozilla.org/moz/jssubscript-loader;1']
                         .getService(Components.interfaces.mozIJSSubScriptLoader);
 
-var noisy = false;
 var appContent;
 
 function pepInit(args) {
   try {
-    if (args.noisy) noisy = true;
-
     let manifest = args.manifest;
     let obj = loadManifest(manifest);
     let firstRun = true;
@@ -70,13 +67,13 @@ function pepInit(args) {
 function runTests(tests) {
   for (let i = 0; i < tests.length; ++i) {
     runFile(tests[i]);
-    // Sleep for half a second because tests will interfere with each other if loaded too quickly
-    utils.sleep(500);
+    // Sleep for a second because tests will interfere with each other if loaded too quickly
+    // TODO Figure out why they interfere with each other
+    utils.sleep(1000);
   }
   // quit the application
-  let app = Components.classes['@mozilla.org/toolkit/app-startup;1']
-                      .getService(Components.interfaces.nsIAppStartup);
-  app.quit(Components.interfaces.nsIAppStartup.eForceQuit);
+  subscriptLoader.loadSubScript('resource://pep/quit.js')
+  goQuitApplication();
 }
 
 /**
@@ -113,9 +110,3 @@ MozmillMsgListener.prototype.update = function(msgType, obj) {
   utils.dumpLine('MOZMILL ' + msgType + ' ' + JSON.stringify(obj) + '\n'); 
 }
 msg.broker.addListener(new MozmillMsgListener());
-
-function debugLine(str) {
-  if (noisy) {
-    utils.dumpLine(str);
-  }
-};
