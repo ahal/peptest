@@ -36,6 +36,9 @@
 
 from mozprocess import ProcessHandler
 from pepresults import Results
+from datetime import datetime
+import multiprocessing as mproc
+import subprocess
 import mozlog
 import os
 
@@ -55,6 +58,25 @@ class PepProcess(ProcessHandler):
                                 ignore_children=ignore_children, **kwargs)
         
         self.logger = mozlog.getLogger('PEP')
+        self.queue = mproc.Queue()
+        self.logproc = mproc.Process(target=results.compileLog, args=(self.queue,))
+
+    def run(self):
+        """Starts the process. waitForFinish must be called to allow the
+        process to complete.
+        """
+        # Spawn a log process
+        self.logproc.start()
+       
+        self.didTimeout = False
+        self.startTime = datetime.now()
+        self.proc = self.Process(self.cmd,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT,
+                                 cwd=self.cwd,
+                                 env=self.env,
+                                 ignore_children = self._ignore_children,
+                                 **self.keywordargs)
 
     def processOutputLine(self, line):
         """
@@ -63,29 +85,6 @@ class PepProcess(ProcessHandler):
         and writing them to a log
         """
         tokens = line.split(' ')
-        if tokens[0] == 'PEP':
-            if tokens[1] == 'TEST-START':
-                results.currentTest = tokens[2].rstrip()
-                results.fails[results.currentTest] = []
-                self.logger.testStart(results.currentTest)
-            elif tokens[1] == 'TEST-END':
-                if len(results.fails[results.currentTest]) == 0:
-                    self.logger.testPass(results.currentTest)
-                self.logger.testEnd(results.currentTest +
-                                    ' | finished in: ' + tokens[3].rstrip() + ' ms')
-                results.currentTest = None
-            elif tokens[1] == 'ACTION-START':
-                results.currentAction = tokens[3].rstrip()
-                self.logger.debug(tokens[1] + ' | ' + results.currentAction)
-            elif tokens[1] == 'ACTION-END':
-                self.logger.debug(tokens[1] + ' | ' + results.currentAction)
-                results.currentAction = None
-            elif tokens[1] == 'ERROR':
-                # TODO Don't use lstrip
-                self.logger.error(line.lstrip('PERO ').rstrip())
-            else:
-                self.logger.debug(line.lstrip('PE '))
-        elif tokens[0] == 'MOZ_EVENT_TRACE' and results.currentAction is not None:
-            self.logger.testFail(results.currentTest + ' | ' + results.currentAction +
-                            ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')
-            results.fails[results.currentTest].append(tokens[3].rstrip())
+        if tokens[0] == 'MOZ_EVENT_TRACE' and tokens[1] == 'sample':
+            self.queue.put((tokens[2], tokens[3]))
+        return

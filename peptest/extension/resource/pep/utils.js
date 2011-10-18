@@ -43,39 +43,63 @@ const hwindow = Components.classes["@mozilla.org/appshell/appShellService;1"]
                           .getService(Components.interfaces.nsIAppShellService)
                           .hiddenDOMWindow;
 
+
+var wFile = Components.classes["@mozilla.org/file/local;1"]
+                     .createInstance(Components.interfaces.nsILocalFile);
+wFile.initWithPath('/home/ahal/git/peptest/peptest/peptest.log');
+
+// Note: Due to the nature of peptest, all file IO must be synchronous, otherwise
+//       it could affect user responsivness, which would skew results
+
+                          
 /**
  * Reads in the local file at filepath and returns a list
  * of all lines that were read in
  */
-function readFile(filePath) {
+function readFile(filepath) {
   let file = Components.classes["@mozilla.org/file/local;1"]
                        .createInstance(Components.interfaces.nsILocalFile);
-  file.initWithPath(filePath);
+  file.initWithPath(filepath);
 
-  const fstream = Components.classes["@mozilla.org/network/file-input-stream;1"]
-                            .createInstance(Components.interfaces.nsIFileInputStream);
-  const cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"]
-                            .createInstance(Components.interfaces.nsIConverterInputStream);
-  fstream.init(file, -1, 0, 0);
-  cstream.init(fstream, "UTF-8", 0, 0);
+  // open an input stream from file  
+  var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].  
+                createInstance(Components.interfaces.nsIFileInputStream);  
+  istream.init(file, 0x01, 0444, 0);  
+  istream.QueryInterface(Components.interfaces.nsILineInputStream);  
   
-  let data = [];
-  let (str = {}) {
-    let read = 0;
-    do {
-      read = cstream.readString(0xffffffff, str);
-      data.push(str.value);
-    } while (read != 0);
-  }
-  cstream.close();  // Also closes fstream
-  return data;
+  // read lines into array  
+  var line = {}, lines = [], hasmore;  
+  do {  
+    hasmore = istream.readLine(line);  
+    lines.push(line.value);   
+  } while(hasmore);  
+  
+  istream.close();
+  return lines;
 };
+
+function writeFile(message) {
+  // file is nsIFile, data is a string  
+  var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].  
+                 createInstance(Components.interfaces.nsIFileOutputStream);  
+    
+  // use 0x02 | 0x10 to open file for appending.  
+  foStream.init(wFile, 0x02 | 0x10 , 0666, 0);   
+    
+  // if you are sure there will never ever be any non-ascii text in data you can   
+  // also call foStream.writeData directly  
+  var converter = Components.classes["@mozilla.org/intl/converter-output-stream;1"].  
+                  createInstance(Components.interfaces.nsIConverterOutputStream);  
+  converter.init(foStream, "UTF-8", 0, 0);  
+  converter.writeString(message);  
+  converter.close(); // this closes foStream  
+}
 
 /**
  * Sends aMessage to the console
  */
 function dumpLine(aMessage) {
-  dump('PEP ' + aMessage + '\n');
+  writeFile('PEP ' + aMessage + '\n');
 };
 
 /**

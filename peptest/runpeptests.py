@@ -121,7 +121,7 @@ class Peptest():
 
     def start(self):
         self.logger.debug('Starting Peptest')
-       
+
         # start firefox 
         self.runner.start()
         self.runner.wait(outputTimeout=self.options.timeout)
@@ -370,12 +370,13 @@ def main(args=sys.argv[1:]):
     if options.logLevel:
         logger.setLevel(getattr(mozlog, options.logLevel, 'INFO'))
 
-    try:
+    #try:
+    if True:
         peptest = applications[options.app](options)
         return peptest.start()
-    except Exception, e:
-        logger.error(str(type(e)) + ' ' + str(e))
-        return 2
+    #except Exception, e:
+    #    logger.error(str(type(e)) + ' ' + str(e))
+    #    return 2
 
 if __name__ == '__main__':
     sys.exit(main())

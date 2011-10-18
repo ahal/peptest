@@ -50,14 +50,14 @@ ResultHandler.prototype.startAction = function(actionName) {
   this.currentAction['test_name'] = this.testName
   this.currentAction['action_name'] = actionName;
   this.currentAction['start_time'] = Date.now();
-  utils.dumpLine('ACTION-START ' + this.testName + ' ' + this.currentAction['action_name']);
+  utils.dumpLine('ACTION-START ' + this.testName + ' ' + this.currentAction['action_name'] + ' ' + this.currentAction['start_time']);
 }
 
 ResultHandler.prototype.endAction = function() {
   if (this.currentAction['start_time']) {
     this.currentAction['end_time'] = Date.now();
     this.results.push(this.currentAction);
-    utils.dumpLine('ACTION-END ' + this.testName + ' ' + this.currentAction['action_name']);
+    utils.dumpLine('ACTION-END ' + this.testName + ' ' + this.currentAction['action_name'] + ' ' + this.currentAction['end_time']);
   } else {
     // TODO Throw error
   }
