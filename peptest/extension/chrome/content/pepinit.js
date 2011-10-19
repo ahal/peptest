@@ -73,7 +73,6 @@ function runTests(tests) {
   }
   utils.dumpLine('FINISHED');
   // quit the application
-  subscriptLoader.loadSubScript('resource://pep/quit.js')
   goQuitApplication();
 }
 
