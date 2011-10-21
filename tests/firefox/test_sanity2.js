@@ -11,5 +11,4 @@ let button = findElement.Name(controller.tabs.activeTab, 'btnK');
 performAction('enterText', function() {
   textbox.sendKeys('foobar');
   button.click();
-  controller.waitForPageLoad();
 });
