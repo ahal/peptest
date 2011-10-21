@@ -42,10 +42,10 @@ var EXPORTED_SYMBOLS = ["MozMillController", "globalEventRegistry", "sleep"];
 
 var EventUtils = {}; Components.utils.import('resource://mozmill/stdlib/EventUtils.js', EventUtils);
 
-var utils = {}; Components.utils.import('resource://mozmill/driver/utils.js', utils);
+var utils = {}; Components.utils.import('resource://mozmill/stdlib/utils.js', utils);
 var elementslib = {}; Components.utils.import('resource://mozmill/driver/elementslib.js', elementslib);
 var mozelement = {}; Components.utils.import('resource://mozmill/driver/mozelement.js', mozelement);
-var msg = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', msg);
+var broker = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', broker);
 
 var hwindow = Components.classes["@mozilla.org/appshell/appShellService;1"]
                 .getService(Components.interfaces.nsIAppShellService)
@@ -280,6 +280,13 @@ var MozMillController = function (window) {
   }
 }
 
+// constructs a MozMillElement from the controller's window
+MozMillController.prototype.__defineGetter__("windowElement", function() {
+  if (this._windowElement == undefined) 
+    this._windowElement = new mozelement.MozMillElement(undefined, undefined, {'element': this.window});
+  return this._windowElement;
+});
+
 MozMillController.prototype.sleep = utils.sleep;
 
 // Open the specified url in the current tab
@@ -296,7 +303,7 @@ MozMillController.prototype.open = function(url)
       throw new Error("MozMillController.open not supported.");
   }
 
-  msg.broker.pass({'function':'Controller.open()'});
+  broker.pass({'function':'Controller.open()'});
 }
 
 /**
@@ -339,7 +346,6 @@ MozMillController.prototype.screenShot = function _screenShot(node, name, save, 
     throw new Error("controller.screenShot() failed: " + e);
   }
 
-
   // Create a timestamp
   var d = new Date();
   // Report object
@@ -348,10 +354,9 @@ MozMillController.prototype.screenShot = function _screenShot(node, name, save, 
               "name": name,
               "timestamp": d.toLocaleString(),
             }
-  // Send the screenshot to the message manager
-  msg.broker.sendMessage("screenShot", obj);
-
-  msg.broker.pass({'function':'controller.screenShot()'});
+  // Send the screenshot object to python over jsbridge
+  broker.sendMessage("screenShot", obj);
+  broker.pass({'function':'controller.screenShot()'});
 }
 
 /**
@@ -369,7 +374,7 @@ MozMillController.prototype.waitFor = function(callback, message, timeout,
                                                interval, thisObject) {
   utils.waitFor(callback, message, timeout, interval, thisObject);
 
-  msg.broker.pass({'function':'controller.waitFor()'});
+  broker.pass({'function':'controller.waitFor()'});
 }
 
 MozMillController.prototype.__defineGetter__("waitForEvents", function() {
@@ -400,18 +405,18 @@ MozMillController.prototype.waitForImage = function (elem, timeout, interval) {
     return elem.getNode().complete == true;
   }, "timeout exceeded for waitForImage " + elem.getInfo(), timeout, interval);
 
-  msg.broker.pass({'function':'Controller.waitForImage()'});
+  broker.pass({'function':'Controller.waitForImage()'});
 }
 
 MozMillController.prototype.startUserShutdown = function (timeout, restart, next, resetProfile) {
   if (restart && resetProfile) {
       throw new Error("You can't have a user-restart and reset the profile; there is a race condition");
   }
-  msg.broker.sendMessage('userShutdown', {'user': true,
+  broker.sendMessage('userShutdown', {'user': true,
                                   'restart': Boolean(restart),
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
-  this.window.setTimeout(msg.broker.sendMessage, timeout, 'userShutdown', 0);
+  this.window.setTimeout(broker.sendMessage, timeout, 'userShutdown', 0);
 }
 
 MozMillController.prototype.restartApplication = function (next, resetProfile) 
@@ -419,12 +424,12 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
   // restart the application via the python runner
   // - next : name of the next test function to run after restart
   // - resetProfile : whether to reset the profile after restart
-  msg.broker.sendMessage('userShutdown', {'user': false,
+  broker.sendMessage('userShutdown', {'user': false,
                                   'restart': true,
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
-  msg.broker.sendMessage('endTest');
-  msg.broker.sendMessage('persist');
+  broker.sendMessage('endTest');
+  broker.sendMessage('persist');
   utils.getMethodInWindows('goQuitApplication')();
 }
 
@@ -432,33 +437,33 @@ MozMillController.prototype.stopApplication = function (resetProfile)
 {
   // stop the application via the python runner
   // - resetProfile : whether to reset the profile after shutdown
-  msg.broker.sendMessage('userShutdown', {'user': false,
+  broker.sendMessage('userShutdown', {'user': false,
                                   'restart': false,
                                   'resetProfile': Boolean(resetProfile)});
-  msg.broker.sendMessage('endTest');
-  msg.broker.sendMessage('persist');
+  broker.sendMessage('endTest');
+  broker.sendMessage('persist');
   utils.getMethodInWindows('goQuitApplication')();
 }
 
 //Browser navigation functions
 MozMillController.prototype.goBack = function(){
   this.window.content.history.back();
-  msg.broker.pass({'function':'Controller.goBack()'});
+  broker.pass({'function':'Controller.goBack()'});
   return true;
 }
 MozMillController.prototype.goForward = function(){
   this.window.content.history.forward();
-  msg.broker.pass({'function':'Controller.goForward()'});
+  broker.pass({'function':'Controller.goForward()'});
   return true;
 }
 MozMillController.prototype.refresh = function(){
   this.window.content.location.reload(true);
-  msg.broker.pass({'function':'Controller.refresh()'});
+  broker.pass({'function':'Controller.refresh()'});
   return true;
 }
 
 function logDeprecated(funcName, message) {
-   msg.broker.log({'function': funcName + '() - DEPRECATED', 'message': funcName + '() is deprecated' + message});
+   broker.log({'function': funcName + '() - DEPRECATED', 'message': funcName + '() is deprecated' + message});
 }
 
 function logDeprecatedAssert(funcName) {
@@ -471,7 +476,7 @@ MozMillController.prototype.assertText = function (el, text) {
   var n = el.getNode();
 
   if (n && n.innerHTML == text){
-    msg.broker.pass({'function':'Controller.assertText()'});
+    broker.pass({'function':'Controller.assertText()'});
     return true;
    }
 
@@ -490,7 +495,7 @@ MozMillController.prototype.assertNode = function (el) {
     throw new Error("could not find element " + el.getInfo());
     return false;
   }
-  msg.broker.pass({'function':'Controller.assertNode()'});
+  broker.pass({'function':'Controller.assertNode()'});
   return true;
 };
 
@@ -502,7 +507,7 @@ MozMillController.prototype.assertNodeNotExist = function (el) {
   try {
     var element = el.getNode();
   } catch(err){
-    msg.broker.pass({'function':'Controller.assertNodeNotExist()'});
+    broker.pass({'function':'Controller.assertNodeNotExist()'});
     return true;
   }
 
@@ -510,7 +515,7 @@ MozMillController.prototype.assertNodeNotExist = function (el) {
     throw new Error("Unexpectedly found element " + el.getInfo());
     return false;
   } else {
-    msg.broker.pass({'function':'Controller.assertNodeNotExist()'});
+    broker.pass({'function':'Controller.assertNodeNotExist()'});
     return true;
   }
 };
@@ -523,7 +528,7 @@ MozMillController.prototype.assertValue = function (el, value) {
   var n = el.getNode();
 
   if (n && n.value == value){
-    msg.broker.pass({'function':'Controller.assertValue()'});
+    broker.pass({'function':'Controller.assertValue()'});
     return true;
   }
   throw new Error("could not validate element " + el.getInfo()+" with value "+ value);
@@ -538,7 +543,7 @@ MozMillController.prototype.assert = function(callback, message, thisObject)
   logDeprecatedAssert("assert");
   utils.assert(callback, message, thisObject);
 
-  msg.broker.pass({'function': ": controller.assert('" + callback + "')"});
+  broker.pass({'function': ": controller.assert('" + callback + "')"});
   return true;
 }
 
@@ -551,7 +556,7 @@ MozMillController.prototype.assertSelected = function (el, value) {
   var validator = value;
 
   if (n && n.options[n.selectedIndex].value == validator){
-    msg.broker.pass({'function':'Controller.assertSelected()'});
+    broker.pass({'function':'Controller.assertSelected()'});
     return true;
     }
   throw new Error("could not assert value for element " + el.getInfo()+" with value "+ value);
@@ -566,7 +571,7 @@ MozMillController.prototype.assertChecked = function (el) {
   var element = el.getNode();
 
   if (element && element.checked == true){
-    msg.broker.pass({'function':'Controller.assertChecked()'});
+    broker.pass({'function':'Controller.assertChecked()'});
     return true;
     }
   throw new Error("assert failed for checked element " + el.getInfo());
@@ -584,7 +589,7 @@ MozMillController.prototype.assertNotChecked = function (el) {
   }
 
   if (!element.hasAttribute("checked") || element.checked != true){
-    msg.broker.pass({'function':'Controller.assertNotChecked()'});
+    broker.pass({'function':'Controller.assertNotChecked()'});
     return true;
     }
   throw new Error("assert failed for not checked element " + el.getInfo());
@@ -608,7 +613,7 @@ MozMillController.prototype.assertJSProperty = function(el, attrib, val) {
   var value = element[attrib];
   var res = (value !== undefined && (val === undefined ? true : String(value) == String(val)));
   if (res) {
-    msg.broker.pass({'function':'Controller.assertJSProperty("' + el.getInfo() + '") : ' + val});
+    broker.pass({'function':'Controller.assertJSProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertJSProperty(" + el.getInfo() + ") : " + 
                      (val === undefined ? "property '" + attrib + "' doesn't exist" : val + " == " + value));
@@ -633,7 +638,7 @@ MozMillController.prototype.assertNotJSProperty = function(el, attrib, val) {
   var value = element[attrib];
   var res = (val === undefined ? value === undefined : String(value) != String(val));
   if (res) {
-    msg.broker.pass({'function':'Controller.assertNotProperty("' + el.getInfo() + '") : ' + val});
+    broker.pass({'function':'Controller.assertNotProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertNotJSProperty(" + el.getInfo() + ") : " +
                      (val === undefined ? "property '" + attrib + "' exists" : val + " != " + value));
@@ -662,7 +667,7 @@ MozMillController.prototype.assertDOMProperty = function(el, attrib, val) {
   }   
  
   if (res) {
-    msg.broker.pass({'function':'Controller.assertDOMProperty("' + el.getInfo() + '") : ' + val});
+    broker.pass({'function':'Controller.assertDOMProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertDOMProperty(" + el.getInfo() + ") : " + 
                      (val === undefined ? "property '" + attrib + "' doesn't exist" : val + " == " + value));
@@ -690,7 +695,7 @@ MozMillController.prototype.assertNotDOMProperty = function(el, attrib, val) {
     res = (String(value) == String(val));
   }   
   if (!res) {
-    msg.broker.pass({'function':'Controller.assertNotDOMProperty("' + el.getInfo() + '") : ' + val});
+    broker.pass({'function':'Controller.assertNotDOMProperty("' + el.getInfo() + '") : ' + val});
   } else {
     throw new Error("Controller.assertNotDOMProperty(" + el.getInfo() + ") : " + 
                      (val == undefined ? "property '" + attrib + "' exists" : val + " == " + value));
@@ -754,7 +759,7 @@ MozMillController.prototype.assertImageLoaded = function (el) {
     ret = true;
   }
   if (ret) {
-    msg.broker.pass({'function':'Controller.assertImageLoaded'});
+    broker.pass({'function':'Controller.assertImageLoaded'});
   } else {
     throw new Error('Controller.assertImageLoaded() failed.')
   }
@@ -796,7 +801,7 @@ MozMillController.prototype.mouseMove = function (doc, start, dest) {
   // Do the initial move to the drag element position
   triggerMouseEvent(doc.body, start[0], start[1]);
   triggerMouseEvent(doc.body, dest[0], dest[1]);
-  msg.broker.pass({'function':'Controller.mouseMove()'});
+  broker.pass({'function':'Controller.mouseMove()'});
   return true;
 }
 
@@ -909,7 +914,7 @@ function browserAdditions (controller) {
 
   controller.waitForPageLoad = function(aDocument, aTimeout, aInterval) {
     var timeout = aTimeout || 30000;
-    var owner;
+    var win = null;
 
     // If a user tries to do waitForPageLoad(2000), this will assign the
     // interval the first arg which is most likely what they were expecting
@@ -917,28 +922,28 @@ function browserAdditions (controller) {
       timeout = aDocument;
     }
 
-    // If the document is a tab find the corresponding browser element.
-    // Otherwise we have to handle an embedded web page.
-    if (aDocument && typeof(aDocument) == "object") {
-      owner = this.window.gBrowser.getBrowserForDocument(aDocument);
+    // If we have a real document use its default view
+    if (aDocument && (typeof(aDocument) === "object") &&
+        "defaultView" in aDocument)
+      win = aDocument.defaultView;
 
-      if (!owner) {
-        // If the document doesn't belong to a tab it will be a
-        // HTML element (e.g. iframe) embedded inside a tab.
-        // In such a case use the default window of the document.
-        owner = aDocument.defaultView;
-       }
-     }
-
-    // If no owner has been specified, fallback to the selected tab browser
-    owner = owner || this.window.gBrowser.selectedBrowser;
+    // If no document has been specified, fallback to the default view of the
+    // currently selected tab browser
+    win = win || this.window.gBrowser.selectedBrowser.contentWindow;
 
     // Wait until the content in the tab has been loaded
-    this.waitFor(function() {
-        return this.isLoaded(owner);
+    this.waitFor(function () {
+        var loaded = this.isLoaded(win);
+        var firstRun = !('mozmillWaitForPageLoad' in win);
+        var ret = firstRun && loaded;
+        if (ret) {
+          win.mozmillWaitForPageLoad = true;
+        }
+        return ret;
     }, "controller.waitForPageLoad(): Timeout waiting for page loaded.",
-       timeout, aInterval, this);
-    msg.broker.pass({'function':'controller.waitForPageLoad()'});
+        timeout, aInterval, this);
+
+    broker.pass({'function':'controller.waitForPageLoad()'});
   }
 }
 
@@ -958,11 +963,21 @@ MozMillController.prototype.select = function (elem, index, option, value) {
 };
 
 MozMillController.prototype.keypress = function(aTarget, aKey, aModifiers, aExpectedEvent) {
+  if (aTarget == null) { aTarget = this.windowElement; }
   return aTarget.keypress(aKey, aModifiers, aExpectedEvent);
 }
 
 MozMillController.prototype.type = function (aTarget, aText, aExpectedEvent) {
-  return aTarget.sendKeys(aText, aExpectedEvent);
+  if (aTarget == null) { aTarget = this.windowElement; }
+
+  var that = this;
+  var retval = true;
+  Array.forEach(aText, function(letter) {
+    if (!that.keypress(aTarget, letter, {}, aExpectedEvent)) {
+      retval = false; }
+  });
+
+  return retval;
 }
 
 MozMillController.prototype.mouseEvent = function(aTarget, aOffsetX, aOffsetY, aEvent, aExpectedEvent) {

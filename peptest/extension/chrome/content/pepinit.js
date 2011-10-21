@@ -36,7 +36,7 @@
  ***** END LICENSE BLOCK ***** */ 
 
 Components.utils.import('resource://gre/modules/NetUtil.jsm');
-var msg = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', msg);
+var broker = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', broker);
 var pep = {}; Components.utils.import('resource://pep/pep.js', pep);
 var utils = {}; Components.utils.import('resource://pep/utils.js', utils);
 
@@ -111,7 +111,13 @@ function loadManifest(manifest) {
 };
 
 function MozmillMsgListener() {}
-MozmillMsgListener.prototype.update = function(msgType, obj) {
-  utils.dumpLine('MOZMILL ' + msgType + ' ' + JSON.stringify(obj) + '\n'); 
+MozmillMsgListener.prototype.pass = function(obj) {
+  utils.dumpLine('MOZMILL pass ' + JSON.stringify(obj) + '\n'); 
 }
-msg.broker.addListener(new MozmillMsgListener());
+MozmillMsgListener.prototype.fail = function(obj) {
+  utils.dumpLine('MOZMILL fail ' + JSON.stringify(obj) + '\n'); 
+}
+MozmillMsgListener.prototype.log = function(obj) {
+  utils.dumpLine('MOZMILL log ' + JSON.stringify(obj) + '\n'); 
+}
+broker.addObject(new MozmillMsgListener());

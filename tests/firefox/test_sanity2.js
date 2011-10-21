@@ -1,5 +1,4 @@
 Components.utils.import("resource://mozmill/driver/mozmill.js");
-
 let controller = getBrowserController();
 
 performAction('openGoogle', function() {

@@ -36,27 +36,23 @@
 // 
 // ***** END LICENSE BLOCK *****
 
-var EXPORTED_SYMBOLS = ["controller", "utils", "elementslib", "findElement", "os",
+var EXPORTED_SYMBOLS = ["controller", "utils", "elementslib", "os",
                         "getBrowserController", "newBrowserController", 
                         "getAddonsController", "getPreferencesController", 
                         "newMail3PaneController", "getMail3PaneController", 
                         "wm", "platform", "getAddrbkController", 
                         "getMsgComposeController", "getDownloadsController",
-                        "Application", "cleanQuit",
+                        "Application", "cleanQuit", "findElement",
                         "getPlacesController", 'isMac', 'isLinux', 'isWindows',
                         "firePythonCallback"
                        ];
                         
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-
 // imports
 var controller = {};  Components.utils.import('resource://mozmill/driver/controller.js', controller);
-var utils = {};       Components.utils.import('resource://mozmill/driver/utils.js', utils);
 var elementslib = {}; Components.utils.import('resource://mozmill/driver/elementslib.js', elementslib);
+var broker = {};      Components.utils.import('resource://mozmill/driver/msgbroker.js', broker);
 var findElement = {}; Components.utils.import('resource://mozmill/driver/mozelement.js', findElement);
-var msg = {}; Components.utils.import('resource://mozmill/driver/msgbroker.js', msg);
+var utils = {};       Components.utils.import('resource://mozmill/stdlib/utils.js', utils);
 var os = {}; Components.utils.import('resource://mozmill/stdlib/os.js', os);
 
 try {
@@ -244,10 +240,10 @@ function firePythonCallback (filename, method, args, kwargs) {
   obj = {'filename': filename, 'method': method};
   obj['args'] = args || [];
   obj['kwargs'] = kwargs || {};
-  msg.broker.sendMessage("firePythonCallback", obj);
+  broker.sendMessage("firePythonCallback", obj);
 }
 
-/*function timer (name) {
+function timer (name) {
   this.name = name;
   this.timers = {};
   frame.timers.push(this);
@@ -264,22 +260,23 @@ timer.prototype.stop = function (name) {
 timer.prototype.end = function () {
   frame.events.fireEvent("timer", this);
   frame.timers.remove(this);
-}*/
+}
 
+// Initialization
 
 /**
-* Console listener which listens for error messages in the console and forwards
-* them to the Mozmill reporting system for output.
-*/
+ * Console listener which listens for error messages in the console and forwards
+ * them to the Mozmill reporting system for output.
+ */
 function ConsoleListener() {
  this.register();
 }
 ConsoleListener.prototype = {
  observe: function(aMessage) {
-   var message = aMessage.message;
+   var msg = aMessage.message;
    var re = /^\[.*Error:.*(chrome|resource):\/\/.*/i;
-   if (message.match(re)) {
-     msg.broker.fail(aMessage);
+   if (msg.match(re)) {
+     broker.fail(aMessage);
    }
  },
  QueryInterface: function (iid) {
@@ -302,7 +299,6 @@ ConsoleListener.prototype = {
 
 // start listening
 var consoleListener = new ConsoleListener();
-
   
 // Observer for new top level windows
 var windowObserver = {
@@ -314,37 +310,37 @@ var windowObserver = {
 /**
  * Attach event listeners
  */
-function attachEventListeners(window) {
+function attachEventListeners(aWindow) {
   // These are the event handlers
   function pageShowHandler(event) {
     var doc = event.originalTarget;
-    var tab = window.gBrowser.getBrowserForDocument(doc);
 
-    if (tab) {
-      //log("*** Loaded tab: location=" + doc.location + ", baseURI=" + doc.baseURI + "\n");
-      tab.mozmillDocumentLoaded = true;
-    } else {
-      //log("*** Loaded HTML location=" + doc.location + ", baseURI=" + doc.baseURI + "\n");
+    // Only update the flag if we have a document as target
+    // see https://bugzilla.mozilla.org/show_bug.cgi?id=690829
+    if ("defaultView" in doc) {
       doc.defaultView.mozmillDocumentLoaded = true;
     }
 
     // We need to add/remove the unload/pagehide event listeners to preserve caching.
-    window.gBrowser.addEventListener("beforeunload", beforeUnloadHandler, true);
-    window.gBrowser.addEventListener("pagehide", pageHideHandler, true);
+    aWindow.gBrowser.addEventListener("beforeunload", beforeUnloadHandler, true);
+    aWindow.gBrowser.addEventListener("pagehide", pageHideHandler, true);
   };
 
   function DOMContentLoadedHandler(event) {
-    var errorRegex = /about:.+(error)|(blocked)\?/;
-    if (errorRegex.exec(event.target.baseURI)) {
-      // Wait about 1s to be sure the DOM is ready
-      mozmill.utils.sleep(1000);
+    var doc = event.originalTarget;
 
-      var tab = window.gBrowser.getBrowserForDocument(event.target);
-      if (tab)
-        tab.mozmillDocumentLoaded = true;
-    
+    var errorRegex = /about:.+(error)|(blocked)\?/;
+    if (errorRegex.exec(doc.baseURI)) {
+      // Wait about 1s to be sure the DOM is ready
+      utils.sleep(1000);
+
+      // Only update the flag if we have a document as target
+      if ("defaultView" in doc) {
+        doc.defaultView.mozmillDocumentLoaded = true;
+      }
+
       // We need to add/remove the unload event listener to preserve caching.
-      window.gBrowser.addEventListener("beforeunload", beforeUnloadHandler, true);
+      aWindow.gBrowser.addEventListener("beforeunload", beforeUnloadHandler, true);
     }
   };
   
@@ -352,17 +348,13 @@ function attachEventListeners(window) {
   // still use pagehide for cases when beforeunload doesn't get fired
   function beforeUnloadHandler(event) {
     var doc = event.originalTarget;
-    var tab = window.gBrowser.getBrowserForDocument(event.target);
 
-    if (tab) {
-      //log("*** Unload tab: location=" + doc.location + ", baseURI=" + doc.baseURI + "\n");
-      tab.mozmillDocumentLoaded = false;
-    } else {
-      //log("*** Unload HTML location=" + doc.location + ", baseURI=" + doc.baseURI + "\n");
+    // Only update the flag if we have a document as target
+    if ("defaultView" in doc) {
       doc.defaultView.mozmillDocumentLoaded = false;
     }
 
-    window.gBrowser.removeEventListener("beforeunload", beforeUnloadHandler, true);
+    aWindow.gBrowser.removeEventListener("beforeunload", beforeUnloadHandler, true);
   };
 
   function pageHideHandler(event) {
@@ -370,44 +362,41 @@ function attachEventListeners(window) {
     // and there is no need for this event handler.
     if (event.persisted) {
       var doc = event.originalTarget;
-      var tab = window.gBrowser.getBrowserForDocument(event.target);
 
-      if (tab) {
-        //log("*** Unload tab: location=" + doc.location + ", baseURI=" + doc.baseURI + "\n");
-        tab.mozmillDocumentLoaded = false;
-      } else {
-        //log("*** Unload HTML location=" + doc.location + ", baseURI=" + doc.baseURI + "\n");
+      // Only update the flag if we have a document as target
+      if ("defaultView" in doc) {
         doc.defaultView.mozmillDocumentLoaded = false;
       }
 
-      window.gBrowser.removeEventListener("beforeunload", beforeUnloadHandler, true);
+      aWindow.gBrowser.removeEventListener("beforeunload", beforeUnloadHandler, true);
     }
 
   };
 
   function onWindowLoaded(event) {
-    window.mozmillDocumentLoaded = true;
+    aWindow.mozmillDocumentLoaded = true;
 
-    if (window.gBrowser) {
+    if ("gBrowser" in aWindow) {
       // Page is ready
-      window.gBrowser.addEventListener("pageshow", pageShowHandler, true);
- 
+      aWindow.gBrowser.addEventListener("pageshow", pageShowHandler, true);
+
       // Note: Error pages will never fire a "load" event. For those we
       // have to wait for the "DOMContentLoaded" event. That's the final state.
       // Error pages will always have a baseURI starting with
       // "about:" followed by "error" or "blocked".
-      window.gBrowser.addEventListener("DOMContentLoaded", DOMContentLoadedHandler, true);
-      
+      aWindow.gBrowser.addEventListener("DOMContentLoaded", DOMContentLoadedHandler, true);
+    
       // Leave page (use caching)
-      window.gBrowser.addEventListener("pagehide", pageHideHandler, true);
+      aWindow.gBrowser.addEventListener("pagehide", pageHideHandler, true);
     }
+
   }
- 
+
   // Add the event handlers to the tabbedbrowser once its window has loaded
-  if (window.content) {
+  if (aWindow.content) {
     onWindowLoaded();
   } else {
-    window.addEventListener("load", onWindowLoaded, false);
+    aWindow.addEventListener("load", onWindowLoaded, false);
   }
 }
   
@@ -416,13 +405,13 @@ function attachEventListeners(window) {
  */
 function initialize() {
   // Activate observer for new top level windows
-  var observerService = Cc["@mozilla.org/observer-service;1"].
-                        getService(Ci.nsIObserverService);
+  var observerService = Components.classes["@mozilla.org/observer-service;1"].
+                        getService(Components.interfaces.nsIObserverService);
   observerService.addObserver(windowObserver, "toplevel-window-ready", false);
 
   // Attach event listeners to all open windows
-  var enumerator = Cc["@mozilla.org/appshell/window-mediator;1"].
-                   getService(Ci.nsIWindowMediator).getEnumerator("");
+  var enumerator = Components.classes["@mozilla.org/appshell/window-mediator;1"].
+                   getService(Components.interfaces.nsIWindowMediator).getEnumerator("");
   while (enumerator.hasMoreElements()) {
     var win = enumerator.getNext();
     attachEventListeners(win);
