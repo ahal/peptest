@@ -167,9 +167,6 @@ class Peptest():
             if os.path.exists(os.path.join(here, f)):
                 os.remove(os.path.join(here, f))
 
-        if os.path.exists(os.path.join(here, 'symbols')):
-            shutil.rmtree(os.path.join('symbols'))
-
         # delete any minidumps that may have been created
         dumpDir = os.path.join(self.profile.profile, 'minidumps')
         if self.options.profilePath and os.path.exists(dumpDir):
@@ -225,6 +222,11 @@ class Peptest():
             else:
                 self.logger.warning('No symbols_path or stackwalk path specified, can\'t process dump')
                 break
+
+        # if the symbols path was downloaded, cleanup after ourselves
+        if utils.isURL(self.options.symbolsPath):
+            if os.path.exists(symbolsPath):
+                shutil.rmtree(symbolsPath)
         return foundCrash
 
 class FirefoxPeptest(Peptest):
