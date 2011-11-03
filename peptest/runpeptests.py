@@ -1,38 +1,38 @@
 # ***** BEGIN LICENSE BLOCK *****
-# Version: MPL 1.1/GPL 2.0/LGPL 2.1 
-# 
-# The contents of this file are subject to the Mozilla Public License Version 
-# 1.1 (the "License"); you may not use this file except in compliance with 
-# the License. You may obtain a copy of the License at 
-# http://www.mozilla.org/MPL/ # 
-# Software distributed under the License is distributed on an "AS IS" basis, 
-# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License 
-# for the specific language governing rights and limitations under the 
-# License. 
-# 
-# The Original Code is Peptest. 
-# 
-# The Initial Developer of the Original Code is 
-#   Mozilla Corporation. 
+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
+#
+# The contents of this file are subject to the Mozilla Public License Version
+# 1.1 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+# http://www.mozilla.org/MPL/ #
+# Software distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+# for the specific language governing rights and limitations under the
+# License.
+#
+# The Original Code is Peptest.
+#
+# The Initial Developer of the Original Code is
+#   Mozilla Corporation.
 # Portions created by the Initial Developer are Copyright (C) 2011
-# the Initial Developer. All Rights Reserved. 
-# 
-# Contributor(s): 
+# the Initial Developer. All Rights Reserved.
+#
+# Contributor(s):
 #   Andrew Halberstadt <halbersa@gmail.com>
-# 
-# Alternatively, the contents of this file may be used under the terms of 
-# either the GNU General Public License Version 2 or later (the "GPL"), or 
-# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"), 
-# in which case the provisions of the GPL or the LGPL are applicable instead 
-# of those above. If you wish to allow use of your version of this file only 
-# under the terms of either the GPL or the LGPL, and not to allow others to 
-# use your version of this file under the terms of the MPL, indicate your 
-# decision by deleting the provisions above and replace them with the notice 
-# and other provisions required by the GPL or the LGPL. If you do not delete 
-# the provisions above, a recipient may use your version of this file under 
-# the terms of any one of the MPL, the GPL or the LGPL. 
-# 
-# ***** END LICENSE BLOCK ***** 
+#
+# Alternatively, the contents of this file may be used under the terms of
+# either the GNU General Public License Version 2 or later (the "GPL"), or
+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+# in which case the provisions of the GPL or the LGPL are applicable instead
+# of those above. If you wish to allow use of your version of this file only
+# under the terms of either the GPL or the LGPL, and not to allow others to
+# use your version of this file under the terms of the MPL, indicate your
+# decision by deleting the provisions above and replace them with the notice
+# and other provisions required by the GPL or the LGPL. If you do not delete
+# the provisions above, a recipient may use your version of this file under
+# the terms of any one of the MPL, the GPL or the LGPL.
+#
+# ***** END LICENSE BLOCK *****
 
 from optparse import OptionParser
 from mozprofile import FirefoxProfile, ThunderbirdProfile, Profile
@@ -89,12 +89,12 @@ class Peptest():
             manifest = TestManifest()
             manifest.read(self.options.testPath)
             tests = manifest.get()
-       
+
         # create a manifest object to be read by the JS side
         manifestObj = {}
         manifestObj['tests'] = tests
-        
-        # write manifest to a JSON file 
+
+        # write manifest to a JSON file
         jsonManifest = open(os.path.join(here, 'manifest.json'), 'w')
         jsonManifest.write(str(manifestObj).replace("'", "\""))
         jsonManifest.close()
@@ -111,7 +111,7 @@ class Peptest():
         # TODO Make browserArgs a list
         cmdargs.extend(self.options.browserArgs)
         cmdargs.extend(['-pep-start', os.path.realpath(jsonManifest.name)])
-        
+
         # run with managed process handler
         self.runner = self.runner_class(profile=self.profile,
                                         binary=self.options.binary,
@@ -121,13 +121,13 @@ class Peptest():
 
     def start(self):
         self.logger.debug('Starting Peptest')
-       
-        # start firefox 
+
+        # start firefox
         self.runner.start()
         self.runner.wait(outputTimeout=self.options.timeout)
         crashed = self.checkForCrashes(results.currentTest)
         self.stop()
-        
+
         if crashed or results.hasFails():
             return 1
         return 0
@@ -149,7 +149,7 @@ class Peptest():
             self.server.serve_forever()
         else:
             self.child_pid = pId
-    
+
     def stop(self):
         """Kill the app"""
         # stop the runner
@@ -191,13 +191,13 @@ class Peptest():
         dumps = glob.glob(os.path.join(dumpDir, '*.dmp'))
 
         symbolsPath = self.options.symbolsPath
-        
+
         for d in dumps:
             import subprocess
             foundCrash = True
             self.logger.info("PROCESS-CRASH | %s | application crashed (minidump found)", testName)
             print "Crash dump filename: " + d
-            
+
             # only proceed if a symbols path and stackwalk path were specified
             if symbolsPath and stackwalkPath and os.path.exists(stackwalkPath):
                 # if symbolsPath is a url, download and extract the zipfile
@@ -251,13 +251,13 @@ class PeptestOptions(OptionParser):
         self.add_option("-b", "--binary",
                         action="store", type="string", dest="binary",
                         help="absolute path to application, overriding default")
-        
+
         self.add_option("--app",
                         action="store", type="string", dest="app",
                         default="firefox",
                         help="app to run the tests on (firefox or thunderbird). "
                              "defaults to firefox")
-        
+
         self.add_option("--log-file",
                         action="store", type="string", dest="logFile",
                         metavar="FILE", default=None,
@@ -273,9 +273,9 @@ class PeptestOptions(OptionParser):
         self.add_option("--log-level",
                         action="store", type="choice", dest="logLevel",
                         choices=LOG_LEVELS, metavar="LEVEL",
-                        default=None, 
+                        default=None,
                         help="one of %s to determine the level of logging"
-                             "logging" % LEVEL_STRING) 
+                             "logging" % LEVEL_STRING)
 
         self.add_option("--setenv",
                         action="append", type="string", dest="environment",
@@ -324,7 +324,7 @@ class PeptestOptions(OptionParser):
                         default = None,
                         help = "absolute path to directory containing breakpad symbols, "
                                "or the URL of a zip file containing symbols")
-        
+
         self.add_option("--tracer-threshold",
                         action="store", type="int", dest="tracerThreshold",
                         default=50,
@@ -351,7 +351,7 @@ class PeptestOptions(OptionParser):
         if not options.testPath:
             print "error: --test-path must specify the path to a test or test manifest"
             return None
-        return options 
+        return options
 
 
 def main(args=sys.argv[1:]):
