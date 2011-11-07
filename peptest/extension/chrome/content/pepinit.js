@@ -61,6 +61,13 @@ function pepInit(args) {
     });
   } catch(e) {
     utils.dumpLine('ERROR ' + e.toString());
+    utils.dumpLine('Traceback:');
+    lines = e.stack.split('\n');
+    for (let i = 0; i < lines.length; ++i) {
+      utils.dumpLine(lines[i]);
+    }
+    // quit the application
+    goQuitApplication();
   }
 }
 
@@ -97,6 +104,11 @@ function runFile(test) {
     utils.dumpLine('TEST-END ' + test.name + ' ' + runTime);
   } catch (e) {
       utils.dumpLine('ERROR ' + test.name + ' | ' + e);
+      utils.dumpLine(test.name + ' | Traceback:');
+      lines = e.stack.split('\n');
+      for (let i = 0; i < lines.length; ++i) {
+        utils.dumpLine(lines[i]);
+      }
   }
 
 };
