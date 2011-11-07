@@ -49,16 +49,17 @@ var appContent;
 
 function pepInit(args) {
   try {
+    // Get manifest object
     let manifest = args.manifest;
     let obj = loadManifest(manifest);
-    let firstRun = true;
+
+    // Set a load listener on the content
     appContent = document.getElementById('appcontent');
-    appContent.addEventListener('pageshow', function() {
-      if (firstRun) {
-        firstRun = false;
-        runTests(obj.tests);
-      }
-    });
+    function start() {
+      appContent.removeEventListener('pageshow', start);
+      runTests(obj.tests);
+    }
+    appContent.addEventListener('pageshow', start);
   } catch(e) {
     utils.dumpLine('ERROR ' + e.toString());
     utils.dumpLine('Traceback:');
@@ -103,14 +104,13 @@ function runFile(test) {
     let runTime = Date.now() - startTime;
     utils.dumpLine('TEST-END ' + test.name + ' ' + runTime);
   } catch (e) {
-      utils.dumpLine('ERROR ' + test.name + ' | ' + e);
-      utils.dumpLine(test.name + ' | Traceback:');
-      lines = e.stack.split('\n');
-      for (let i = 0; i < lines.length; ++i) {
-        utils.dumpLine(lines[i]);
-      }
+    utils.dumpLine('ERROR ' + test.name + ' | ' + e);
+    utils.dumpLine(test.name + ' | Traceback:');
+    lines = e.stack.split('\n');
+    for (let i = 0; i < lines.length; ++i) {
+      utils.dumpLine(lines[i]);
+    }
   }
-
 };
 
 /**

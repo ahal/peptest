@@ -53,6 +53,7 @@ Components.utils["import"]("resource://gre/modules/XPCOMUtils.jsm");
 // Command Line Handler
 function CommandLineHandler() {
     this.wrappedJSObject = this;
+    this.firstRun = true;
 };
 
 CommandLineHandler.prototype = {
