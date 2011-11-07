@@ -37,18 +37,19 @@
 from optparse import OptionParser
 from mozprofile import FirefoxProfile, ThunderbirdProfile, Profile
 from mozrunner import FirefoxRunner, ThunderbirdRunner, Runner
+from mozhttpd import MozHttpd
 from manifestparser import TestManifest
-from pepserver import PepHTTPServer
 from pepprocess import PepProcess
 from pepresults import Results
 
 import peputils as utils
-import glob
+import traceback
 import mozlog
-import os
+import glob
 import shutil
-import sys
 import signal
+import os
+import sys
 
 results = Results()
 here = os.path.dirname(os.path.realpath(__file__))
@@ -64,7 +65,7 @@ class Peptest():
 
     def __init__(self, options, **kwargs):
         self.options = options
-        self.child_pid = None
+        self.server = None
         self.logger = mozlog.getLogger('PEP')
 
         # create the profile
@@ -140,15 +141,10 @@ class Peptest():
         if not self.options.serverPath:
             self.logger.warning('Can\'t start HTTP server, --server-path not specified')
             return
-        pId = os.fork()
-        # if child process
-        if pId == 0:
-            os.chdir(os.path.dirname(self.options.serverPath))
-            self.server = PepHTTPServer(self.options.serverPort)
-            self.logger.debug('Starting server on port ' + str(self.options.serverPort))
-            self.server.serve_forever()
-        else:
-            self.child_pid = pId
+        self.logger.debug('Starting server on port ' + str(self.options.serverPort))
+        self.server = MozHttpd(port=self.options.serverPort,
+                               docroot=self.options.serverPath)
+        self.server.start(block=False)
 
     def stop(self):
         """Kill the app"""
@@ -157,9 +153,8 @@ class Peptest():
             self.runner.stop()
 
         # kill the server process
-        if self.child_pid is not None:
-            # TODO Kill properly (?)
-            os.kill(self.child_pid, signal.SIGKILL)
+        if self.server:
+            self.server.stop()
 
         # remove harness related files
         files = ['manifest.json']
@@ -310,7 +305,7 @@ class PeptestOptions(OptionParser):
 
         self.add_option("--server-port",
                         action="store", type="int", dest="serverPort",
-                        default=8080,
+                        default=8888,
                         help="The port to host test related files on")
 
         self.add_option("--server-path",
@@ -375,8 +370,10 @@ def main(args=sys.argv[1:]):
     try:
         peptest = applications[options.app](options)
         return peptest.start()
-    except Exception, e:
-        logger.error(str(type(e)) + ' ' + str(e))
+    except Exception:
+        cla, exc = sys.exc_info()[:2]
+        logger.error("%s: %s" % (cla.__name__, exc))
+        logger.debug("Traceback:\n%s" % (traceback.format_exc()))
         return 2
 
 if __name__ == '__main__':
