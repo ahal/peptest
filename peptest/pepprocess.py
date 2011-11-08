@@ -83,6 +83,8 @@ class PepProcess(ProcessHandler):
             elif tokens[1] in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
                 line = line[len('PEP ' + tokens[1]):]
                 getattr(self.logger, tokens[1].lower())(line.strip())
+                if tokens[1] == 'ERROR':
+                    results.fails[results.currentTest].append(tokens[3].rstrip())
             else:
                 line = line[len('PEP'):]
                 self.logger.debug(line.strip())

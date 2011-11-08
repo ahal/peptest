@@ -37,14 +37,36 @@
 
 var EXPORTED_SYMBOLS = ['PepAPI'];
 var results = {}; Components.utils.import('resource://pep/results.js', results);
+var utils = {}; Components.utils.import('resource://pep/utils.js', utils);
 
+/**
+ * This is the API exposed to tests
+ * Any properties of this object will be directly injected into test scope
+ */
 function PepAPI(testName) {
   this.testName = testName;
+  this.log = new Log(this.testName);
   this.resultHandler = new results.ResultHandler(this.testName);
 }
-
 PepAPI.prototype.performAction = function(actionName, func) {
   this.resultHandler.startAction(actionName);
   func();
   this.resultHandler.endAction();
+}
+
+// Logging wrapper for tests 
+function Log(testName) {
+  this.testName = testName;
+}
+Log.prototype.debug = function(msg) {
+  utils.dumpLine('DEBUG ' + this.testName + ' | ' + msg);
+}
+Log.prototype.info = function(msg) {
+  utils.dumpLine('INFO ' + this.testName + ' | ' + msg);
+}
+Log.prototype.warning = function(msg) {
+  utils.dumpLine('WARNING ' + this.testName + ' | ' + msg);
+}
+Log.prototype.error = function(msg) {
+  utils.dumpLine('ERROR ' + this.testName + ' | ' + msg);
 }
