@@ -261,8 +261,7 @@ class PeptestOptions(OptionParser):
         self.add_option("--timeout",
                         type="int", dest="timeout",
                         default=None,
-                        help="global timeout in seconds")
-
+                        help="global timeout in seconds (with no output)")
         LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
         LEVEL_STRING = ", ".join(LOG_LEVELS)
         self.add_option("--log-level",

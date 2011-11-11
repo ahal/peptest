@@ -1,3 +1,4 @@
+// Import mozmill and initialize a controller
 Components.utils.import('resource://mozmill/driver/mozmill.js');
 let c = getBrowserController();
 
@@ -9,6 +10,7 @@ performAction('scroll_bookmarks', function() {
   bookmark.click();
   for (let i = 0; i < 15; ++i) {
     bookmark.keypress('VK_DOWN');
+    // Sleep to better emulate a user
     c.sleep(10);
   }
 });
@@ -16,6 +18,4 @@ performAction('scroll_bookmarks', function() {
 let showall = findElement.ID(c.window.document, "bookmarksShowAll");
 performAction('show_all_bookmarks', function() {
   showall.click();
-  // Sleep so consequences of clicking show all are tested for responsiveness
-  c.sleep(100);
 });

@@ -12,7 +12,7 @@ c.open("http://mozilla.org");
 c.waitForPageLoad();
 
 // Grab reference to element on page (this is the <body> element in this case)
-let page = findElement.ID(c.tabs.activeTab, 'home');
+let page = findElement.ID(c.tabs.activeTab, 'header');
 // Perform our first action, reload.
 // It is very important to only place things that we
 // are interested in testing inside of a performAction call
@@ -40,6 +40,7 @@ performAction('content_scroll', function() {
   page.rightClick();
   for (let i = 0; i < 15; ++i) {
     page.keypress('VK_DOWN');
+    // Sleep to emulate a user better
     c.sleep(10);
   }
 });
@@ -61,6 +62,7 @@ performAction('chrome_scroll', function() {
   bar.rightClick();
   for (let i = 0; i < 15; ++i) {
     page.keypress('VK_DOWN');
+    // Sleep to emulate a user better
     c.sleep(10);
   }
 });
