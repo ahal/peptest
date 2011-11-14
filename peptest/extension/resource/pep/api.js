@@ -56,9 +56,12 @@ PepAPI.prototype.performAction = function(actionName, func) {
   func();
   this.resultHandler.endAction();
 }
-PepAPI.prototype.getWindow = function() {
-  // TODO Return other windows depending on app (e.g Mail3Pane)
-  return wm.getMostRecentWindow("navigator:browser");
+PepAPI.prototype.getWindow = function(windowType) {
+  if (windowType === undefined) {
+    windowType = "navigator:browser";
+  }
+
+  return wm.getMostRecentWindow(windowType);
 }
 PepAPI.prototype.sleep = function(milliseconds) {
   utils.sleep(milliseconds);

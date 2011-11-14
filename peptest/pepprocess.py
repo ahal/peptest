@@ -55,6 +55,7 @@ class PepProcess(ProcessHandler):
                                 ignore_children=ignore_children, **kwargs)
 
         self.logger = mozlog.getLogger('PEP')
+        results.fails[str(None)] = []
 
     def processOutputLine(self, line):
         """
@@ -82,12 +83,12 @@ class PepProcess(ProcessHandler):
                 results.currentAction = None
             elif tokens[1] in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
                 line = line[len('PEP ' + tokens[1]):]
-                getattr(self.logger, tokens[1].lower())(line.strip())
+                getattr(self.logger, tokens[1].lower())(line.rstrip())
                 if tokens[1] == 'ERROR':
-                    results.fails[results.currentTest].append("fail")
+                    results.fails[str(results.currentTest)].append("fail")
             else:
                 line = line[len('PEP'):]
-                self.logger.debug(line.strip())
+                self.logger.debug(line.rstrip())
         elif tokens[0] == 'MOZ_EVENT_TRACE' and results.currentAction is not None:
             self.logger.testFail(results.currentTest + ' | ' + results.currentAction +
                             ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')

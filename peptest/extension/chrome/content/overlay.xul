@@ -2,7 +2,6 @@
 <?xml-stylesheet href="chrome://pep/skin/overlay.css" type="text/css"?>
 <!DOCTYPE overlay SYSTEM "chrome://pep/locale/overlay.dtd">
 <overlay id="pep-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <script type="application/x-javascript" src="resource://pep/quit.js"/>
-  <script type="application/x-javascript" src="chrome://pep/content/pepinit.js"/>
-  <script type="application/x-javascript" src="chrome://pep/content/overlay.js"/>
+  <script type="application/x-javascript" src="chrome://pep/content/quit.js"/>
+  <script type="application/x-javascript" src="chrome://pep/content/init.js"/>
 </overlay>

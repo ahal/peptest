@@ -1,5 +1,5 @@
-/* ***** begin license block *****
- * version: mpl 1.1/gpl 2.0/lgpl 2.1
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
@@ -11,18 +11,15 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is DOM Inspector.
+ * The Original Code is peptest.
  *
  * The Initial Developer of the Original Code is
- * Christopher A. Aillon <christopher@aillon.com>.
- * Portions created by the Initial Developer are Copyright (C) 2003
+ * The Mozilla Foundation.
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *   Christopher A. Aillon <christopher@aillon.com>
- *   L. David Baron, Mozilla Corporation <dbaron@dbaron.org> (modified for reftest)
- *   Vladimir Vukicevic, Mozilla Corporation <dbaron@dbaron.org> (modified for tp)
- *   Alice Nodelman, Mozilla Corporation <anodelman@mozilla.com> (modified for crete)
+ *  Andrew Halberstadt <halbersa@gmail.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -41,14 +38,9 @@
 const PEP_CONTRACTID  = "@mozilla.org/commandlinehandler/general-startup;1?type=pep";
 const PEP_CID         = Components.ID('{807b1ae9-df22-40bd-8d0a-2a583da551bb}');
 const PEP_CATEGORY    = "m-pep";
-const PEP_DESCRIPTION = "PEP Firefox Responsiveness Testing Harness";
+const PEP_DESCRIPTION = "Responsiveness Testing Harness";
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
-
-Components.utils["import"]("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 // Command Line Handler
 function CommandLineHandler() {
@@ -60,17 +52,17 @@ CommandLineHandler.prototype = {
   classID: PEP_CID,
   classDescription: PEP_DESCRIPTION,
   contractID: PEP_CONTRACTID,
-  
+
   QueryInterface: XPCOMUtils.generateQI([
-      Ci.nsISupports,
-      Ci.nsICommandLineHandler
+      Components.interfaces.nsISupports,
+      Components.interfaces.nsICommandLineHandler
   ]),
 
   _xpcom_categories: [{
       category: "command-line-handler",
       entry: PEP_CATEGORY,
   }],
-  
+
   /* nsICommandLineHandler */
   handle : function (cmdLine) {
     try {
