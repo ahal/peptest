@@ -40,11 +40,12 @@ const cmdLineHandler =
         .getService(Ci.nsICommandLineHandler);
 
 
+var log = {};       // basic logger
 var utils = {};     // utility object
 var broker = {};    // mozmill message broker for listening to mozmill events
-//Components.utils.import('resource://gre/modules/NetUtil.jsm');
 // test suite object that will run the tests
 Components.utils.import('resource://pep/testsuite.js');
+Components.utils.import('resource://pep/logger.js', log);
 Components.utils.import('resource://pep/utils.js', utils);
 Components.utils.import('resource://mozmill/driver/msgbroker.js', broker);
 
@@ -80,11 +81,11 @@ function initialize() {
       };
       APPCONTENT.addEventListener('pageshow', runTests);
     } catch(e) {
-      utils.dumpLine('ERROR ' + e.toString());
-      utils.dumpLine('Traceback:');
+      log.error(e.toString());
+      log.debug('Traceback:');
       lines = e.stack.split('\n');
       for (let i = 0; i < lines.length - 1; ++i) {
-        utils.dumpLine('\t' + lines[i]);
+        log.debug('\t' + lines[i]);
       }
       goQuitApplication();
     }
@@ -96,16 +97,15 @@ function initialize() {
  */
 function MozmillMsgListener() {}
 MozmillMsgListener.prototype.pass = function(obj) {
-  utils.dumpLine('MOZMILL pass ' + JSON.stringify(obj) + '\n');
+  log.debug('MOZMILL pass ' + JSON.stringify(obj) + '\n');
 };
 MozmillMsgListener.prototype.fail = function(obj) {
   // TODO Should this cause an error?
-  utils.dumpLine('WARNING MOZMILL fail ' + JSON.stringify(obj) + '\n');
+  log.warning('MOZMILL fail ' + JSON.stringify(obj) + '\n');
 };
 MozmillMsgListener.prototype.log = function(obj) {
-  utils.dumpLine('MOZMILL log ' + JSON.stringify(obj) + '\n');
+  log.debug('MOZMILL log ' + JSON.stringify(obj) + '\n');
 };
 
 // register load listener for command line argument handling.
 window.addEventListener("load", initialize, false);
-

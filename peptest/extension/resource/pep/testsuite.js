@@ -43,8 +43,10 @@ const scriptLoader = Components.classes['@mozilla.org/moz/jssubscript-loader;1']
                        .getService(Components.interfaces.mozIJSSubScriptLoader);
 
 var api = {}; // api that gets injected into each test scope
+var log = {};
 var utils = {};
 Components.utils.import('resource://pep/api.js', api);
+Components.utils.import('resource://pep/logger.js', log);
 Components.utils.import('resource://pep/utils.js', utils);
 
 
@@ -66,7 +68,7 @@ TestSuite.prototype.run = function() {
     // TODO Figure out why they interfere with each other
     utils.sleep(1000);
   }
-  utils.dumpLine('INFO TEST SUITE FINISHED');
+  log.info('Test Suite Finished');
 };
 
 /**
@@ -83,7 +85,7 @@ TestSuite.prototype.loadTest = function(test) {
     let testScope = new api.PepAPI(test.name);
 
     // pre-test
-    utils.dumpLine('TEST-START ' + test.name);
+    log.log('TEST-START', test.name);
     let startTime = Date.now();
 
     // run the test
@@ -91,13 +93,13 @@ TestSuite.prototype.loadTest = function(test) {
 
     // post-test
     let runTime = Date.now() - startTime;
-    utils.dumpLine('TEST-END ' + test.name + ' ' + runTime);
+    log.log('TEST-END', test.name + ' ' + runTime);
   } catch (e) {
-    utils.dumpLine('ERROR ' + test.name + ' | ' + e);
-    utils.dumpLine(test.name + ' | Traceback:');
+    log.error(test.name + ' | ' + e);
+    log.debug(test.name + ' | Traceback:');
     lines = e.stack.split('\n');
     for (let i = 0; i < lines.length - 1; ++i) {
-      utils.dumpLine('\t' + lines[i]);
+      log.debug('\t' + lines[i]);
     }
   }
 };

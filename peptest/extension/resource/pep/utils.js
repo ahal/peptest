@@ -35,7 +35,7 @@
 *
 ***** END LICENSE BLOCK ***** */
 
-var EXPORTED_SYMBOLS = ['readFile', 'dumpLine', 'sleep'];
+var EXPORTED_SYMBOLS = ['readFile', 'sleep'];
 
 const consoleService = Components.classes["@mozilla.org/consoleservice;1"]
                                  .getService(Components.interfaces.nsIConsoleService);
@@ -69,13 +69,6 @@ function readFile(filePath) {
   }
   cstream.close();  // Also closes fstream
   return data;
-};
-
-/**
- * Sends aMessage to the console
- */
-function dumpLine(aMessage) {
-  dump('PEP ' + aMessage + '\n');
 };
 
 /**

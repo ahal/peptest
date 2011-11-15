@@ -37,9 +37,10 @@
 
 var EXPORTED_SYMBOLS = ['PepAPI'];
 var results = {}; Components.utils.import('resource://pep/results.js', results);
+var log = {}; Components.utils.import('resource://pep/logger.js', log);
 var utils = {}; Components.utils.import('resource://pep/utils.js', utils);
 
-var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+const wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                             .getService(Components.interfaces.nsIWindowMediator);
 
 /**
@@ -72,14 +73,14 @@ function Log(testName) {
   this.testName = testName;
 }
 Log.prototype.debug = function(msg) {
-  utils.dumpLine('DEBUG ' + this.testName + ' | ' + msg);
+  log.debug(this.testName + ' | ' + msg);
 }
 Log.prototype.info = function(msg) {
-  utils.dumpLine('INFO ' + this.testName + ' | ' + msg);
+  log.info(this.testName + ' | ' + msg);
 }
 Log.prototype.warning = function(msg) {
-  utils.dumpLine('WARNING ' + this.testName + ' | ' + msg);
+  log.warning(this.testName + ' | ' + msg);
 }
 Log.prototype.error = function(msg) {
-  utils.dumpLine('ERROR ' + this.testName + ' | ' + msg);
+  log.error(this.testName + ' | ' + msg);
 }

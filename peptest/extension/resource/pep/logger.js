@@ -35,39 +35,28 @@
 *
 ***** END LICENSE BLOCK ***** */
 
-var EXPORTED_SYMBOLS = ['ResultHandler'];
+/**
+ * Simple logging module that dumps to the console
+ */
 
-var log = {}; Components.utils.import('resource://pep/logger.js', log);
-var utils = {}; Components.utils.import('resource://pep/utils.js', utils);
+var EXPORTED_SYMBOLS = ['debug', 'info', 'warning', 'error', 'log'];
 
-function ResultHandler(testName) {
-  this.results = [];
-  this.currentAction = {};
-  this.testName = testName;
-}
+function debug(msg) {
+  dump('PEP DEBUG ' + msg + '\n');
+};
 
-ResultHandler.prototype.startAction = function(actionName) {
-  this.currentAction = {};
-  this.currentAction['test_name'] = this.testName
-  this.currentAction['action_name'] = actionName;
-  this.currentAction['start_time'] = Date.now();
-  log.log('ACTION-START', this.testName + ' ' + this.currentAction['action_name']);
-}
+function info(msg) {
+  dump('PEP INFO ' + msg + '\n');
+};
 
-ResultHandler.prototype.endAction = function() {
-  if (this.currentAction['start_time']) {
-    // Sleep for 200 milliseconds
-    // This is here because there may still be event tracer events
-    // propagating through the event loop. We don't want to miss
-    // unresponsiveness caused by operations executed towards the
-    // end of a performAction call.
-    utils.sleep(200);
-    this.currentAction['end_time'] = Date.now();
-    this.results.push(this.currentAction);
-    log.log('ACTION-END', this.testName + ' ' + this.currentAction['action_name']);
-  }
-}
+function warning(msg) {
+  dump('PEP WARNING ' + msg + '\n');
+};
 
-ResultHandler.prototype.getResults = function() {
-  return this.results
-}
+function error(msg) {
+  dump('PEP ERROR ' + msg + '\n');
+};
+
+function log(level, msg) {
+  dump('PEP ' + level + ' ' + msg + '\n');
+};
