@@ -14,11 +14,12 @@
 * The Original Code is The Original Code is Mozilla Automated Testing Code
 *
 * The Initial Developer of the Original Code is
-* Mozilla Corporation.
+*   The Mozilla Foundation.
 * Portions created by the Initial Developer are Copyright (C) 2005
 * the Initial Developer. All Rights Reserved.
 *
-* Contributor(s): Bob Clary <bob@bclary.com>
+* Contributor(s):
+*   Bob Clary <bob@bclary.com>
 *
 * Alternatively, the contents of this file may be used under the terms of
 * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -45,12 +46,12 @@ function canQuitApplication() {
   if (!os) {
     return true;
   }
-  
+
   try {
     var cancelQuit = Components.classes["@mozilla.org/supports-PRBool;1"]
       .createInstance(Components.interfaces.nsISupportsPRBool);
     os.notifyObservers(cancelQuit, "quit-application-requested", null);
-    
+
     // Something aborted the quit process.
     if (cancelQuit.data) {
       return false;

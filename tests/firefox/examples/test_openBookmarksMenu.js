@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is
  *   The Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011.
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -33,54 +33,26 @@
  * the provisions above, a recipient may use your version of this file under
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
- ***** END LICENSE BLOCK ***** */
+ * ***** END LICENSE BLOCK ***** */
 
-var EXPORTED_SYMBOLS = ['PepAPI'];
-var results = {}; Components.utils.import('resource://pep/results.js', results);
-var log = {}; Components.utils.import('resource://pep/logger.js', log);
-var utils = {}; Components.utils.import('resource://pep/utils.js', utils);
+// Import mozmill and initialize a controller
+Components.utils.import('resource://mozmill/driver/mozmill.js');
+let c = getBrowserController();
 
-const wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                            .getService(Components.interfaces.nsIWindowMediator);
+c.open('http://mozilla.org');
+c.waitForPageLoad();
 
-/**
- * This is the API exposed to tests
- * Any properties of this object will be directly injected into test scope
- */
-function PepAPI(testName) {
-  this.testName = testName;
-  this.log = new Log(this.testName);
-  this.resultHandler = new results.ResultHandler(this.testName);
-}
-PepAPI.prototype.performAction = function(actionName, func) {
-  this.resultHandler.startAction(actionName);
-  func();
-  this.resultHandler.endAction();
-}
-PepAPI.prototype.getWindow = function(windowType) {
-  if (windowType === undefined) {
-    windowType = "navigator:browser";
+let bookmark = findElement.ID(c.window.document, "bookmarksMenu");
+performAction('scroll_bookmarks', function() {
+  bookmark.click();
+  for (let i = 0; i < 15; ++i) {
+    bookmark.keypress('VK_DOWN');
+    // Sleep to better emulate a user
+    c.sleep(10);
   }
+});
 
-  return wm.getMostRecentWindow(windowType);
-}
-PepAPI.prototype.sleep = function(milliseconds) {
-  utils.sleep(milliseconds);
-}
-
-// Logging wrapper for tests
-function Log(testName) {
-  this.testName = testName;
-}
-Log.prototype.debug = function(msg) {
-  log.debug(this.testName + ' | ' + msg);
-}
-Log.prototype.info = function(msg) {
-  log.info(this.testName + ' | ' + msg);
-}
-Log.prototype.warning = function(msg) {
-  log.warning(this.testName + ' | ' + msg);
-}
-Log.prototype.error = function(msg) {
-  log.error(this.testName + ' | ' + msg);
-}
+let showall = findElement.ID(c.window.document, "bookmarksShowAll");
+performAction('show_all_bookmarks', function() {
+  showall.click();
+});

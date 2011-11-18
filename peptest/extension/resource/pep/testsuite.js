@@ -14,7 +14,7 @@
  * The Original Code is peptest.
  *
  * The Initial Developer of the Original Code is
- * Mozilla Foundation.
+ *   The Mozilla Foundation.
  * Portions created by the Initial Developer are Copyright (C) 2011.
  * the Initial Developer. All Rights Reserved.
  *
