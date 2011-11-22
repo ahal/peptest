@@ -129,7 +129,7 @@ class Peptest():
         crashed = self.checkForCrashes(results.currentTest)
         self.stop()
 
-        if crashed or results.hasFails():
+        if crashed or results.has_fails():
             return 1
         return 0
 

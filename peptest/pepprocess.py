@@ -72,8 +72,10 @@ class PepProcess(ProcessHandler):
             elif tokens[1] == 'TEST-END':
                 if len(results.fails[results.currentTest]) == 0:
                     self.logger.testPass(results.currentTest)
-                self.logger.testEnd(results.currentTest +
-                                    ' | finished in: ' + tokens[3].rstrip() + ' ms')
+                self.logger.testEnd(
+                        results.currentTest +
+                        ' | finished in: ' + tokens[3].rstrip() + ' ms' +
+                        ' | metric: ' + results.get_metric(results.currentTest))
                 results.currentTest = None
             elif tokens[1] == 'ACTION-START':
                 results.currentAction = tokens[3].rstrip()
@@ -85,11 +87,12 @@ class PepProcess(ProcessHandler):
                 line = line[len('PEP ' + tokens[1])+1:]
                 getattr(self.logger, tokens[1].lower())(line.rstrip())
                 if tokens[1] == 'ERROR':
-                    results.fails[str(results.currentTest)].append("fail")
+                    results.fails[str(results.currentTest)].append(0)
             else:
                 line = line[len('PEP'):]
                 self.logger.debug(line.rstrip())
         elif tokens[0] == 'MOZ_EVENT_TRACE' and results.currentAction is not None:
-            self.logger.testFail(results.currentTest + ' | ' + results.currentAction +
-                            ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')
-            results.fails[results.currentTest].append(tokens[3].rstrip())
+            self.logger.testFail(
+                    results.currentTest + ' | ' + results.currentAction +
+                    ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')
+            results.fails[results.currentTest].append(int(tokens[3].rstrip()))

@@ -53,8 +53,12 @@ class Results(object):
         self.currentAction = None
         self.fails = {}
 
-    def hasFails(self):
+    def has_fails(self):
         for k, v in self.fails.iteritems():
             if len(v) > 0:
                 return True
         return False
+
+    def get_metric(self, test):
+        s = sum([x*x / 1000.0 for x in self.fails[test]])
+        return str(s)
