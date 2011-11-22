@@ -65,11 +65,15 @@ class PepProcess(ProcessHandler):
         """
         tokens = line.split(' ')
         if len(tokens) > 1 and tokens[0] == 'PEP':
-            if tokens[1] == 'TEST-START':
+            # The output is generated from the Peptest extension
+            # Format is 'PEP <LEVEL> <MSG>' where <MSG> can have multiple tokens
+            # The content of <MSG> depends on the <LEVEL>
+            level = tokens[1]
+            if level == 'TEST-START':
                 results.currentTest = tokens[2].rstrip()
                 results.fails[results.currentTest] = []
                 self.logger.testStart(results.currentTest)
-            elif tokens[1] == 'TEST-END':
+            elif level == 'TEST-END':
                 if len(results.fails[results.currentTest]) == 0:
                     self.logger.testPass(results.currentTest)
                 self.logger.testEnd(
@@ -77,21 +81,24 @@ class PepProcess(ProcessHandler):
                         ' | finished in: ' + tokens[3].rstrip() + ' ms' +
                         ' | metric: ' + results.get_metric(results.currentTest))
                 results.currentTest = None
-            elif tokens[1] == 'ACTION-START':
+            elif level == 'ACTION-START':
                 results.currentAction = tokens[3].rstrip()
-                self.logger.debug(tokens[1] + ' | ' + results.currentAction)
-            elif tokens[1] == 'ACTION-END':
-                self.logger.debug(tokens[1] + ' | ' + results.currentAction)
+                self.logger.debug(level + ' | ' + results.currentAction)
+            elif level == 'ACTION-END':
+                self.logger.debug(level + ' | ' + results.currentAction)
                 results.currentAction = None
-            elif tokens[1] in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
-                line = line[len('PEP ' + tokens[1])+1:]
-                getattr(self.logger, tokens[1].lower())(line.rstrip())
-                if tokens[1] == 'ERROR':
+            elif level in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
+                line = line[len('PEP ' + level)+1:]
+                getattr(self.logger, level.lower())(line.rstrip())
+                if level == 'ERROR':
                     results.fails[str(results.currentTest)].append(0)
             else:
                 line = line[len('PEP'):]
                 self.logger.debug(line.rstrip())
         elif tokens[0] == 'MOZ_EVENT_TRACE' and results.currentAction is not None:
+            # The output is generated from EventTracer
+            # Format is 'MOZ_EVENT_TRACE sample <TIMESTAMP> <VALUE>
+            # <VALUE> is the unresponsive time in ms
             self.logger.testFail(
                     results.currentTest + ' | ' + results.currentAction +
                     ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')
