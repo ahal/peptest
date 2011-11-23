@@ -60,5 +60,4 @@ class Results(object):
         return False
 
     def get_metric(self, test):
-        s = sum([x*x / 1000.0 for x in self.fails[test]])
-        return str(s)
+        return sum([x*x / 1000.0 for x in self.fails[test]])

@@ -93,7 +93,9 @@ TestSuite.prototype.loadTest = function(test) {
 
     // post-test
     let runTime = Date.now() - startTime;
-    log.log('TEST-END', test.name + ' ' + runTime);
+    let fThreshold = test['failThreshold'] === undefined ?
+                          '' : ' ' + test['failThreshold']
+    log.log('TEST-END', test.name + ' ' + runTime + fThreshold);
   } catch (e) {
     log.error(test.name + ' | ' + e);
     log.debug(test.name + ' | Traceback:');

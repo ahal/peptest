@@ -74,12 +74,23 @@ class PepProcess(ProcessHandler):
                 results.fails[results.currentTest] = []
                 self.logger.testStart(results.currentTest)
             elif level == 'TEST-END':
-                if len(results.fails[results.currentTest]) == 0:
-                    self.logger.testPass(results.currentTest)
+                metric = results.get_metric(results.currentTest)
+                if len(tokens) > 4:
+                    threshold = float(tokens[4].rstrip())
+                else:
+                    threshold = 0.0
+
+                msg = results.currentTest \
+                      + ' | fail threshold: ' + str(threshold) \
+                      + ' | metric: ' + str(metric)
+                if metric > threshold:
+                    self.logger.testFail(msg)
+                else:
+                    self.logger.testPass(msg)
+
                 self.logger.testEnd(
                         results.currentTest +
-                        ' | finished in: ' + tokens[3].rstrip() + ' ms' +
-                        ' | metric: ' + results.get_metric(results.currentTest))
+                        ' | finished in: ' + tokens[3].rstrip() + ' ms')
                 results.currentTest = None
             elif level == 'ACTION-START':
                 results.currentAction = tokens[3].rstrip()
@@ -99,7 +110,7 @@ class PepProcess(ProcessHandler):
             # The output is generated from EventTracer
             # Format is 'MOZ_EVENT_TRACE sample <TIMESTAMP> <VALUE>
             # <VALUE> is the unresponsive time in ms
-            self.logger.testFail(
+            self.logger.warning(
                     results.currentTest + ' | ' + results.currentAction +
                     ' | unresponsive time: ' + tokens[3].rstrip() + ' ms')
             results.fails[results.currentTest].append(int(tokens[3].rstrip()))
