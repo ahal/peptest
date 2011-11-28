@@ -83,6 +83,7 @@ class Peptest():
             testObj = {}
             testObj['path'] = os.path.realpath(self.options.testPath)
             testObj['name'] = os.path.basename(self.options.testPath)
+            testObj['here'] = os.path.dirname(testObj['path'])
             tests.append(testObj)
         else:
             # a test manifest was passed in
