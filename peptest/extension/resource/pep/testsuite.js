@@ -82,7 +82,9 @@ TestSuite.prototype.loadTest = function(test) {
   let uri = gIOS.newFileURI(file).spec;
 
   try {
-    let testScope = new api.PepAPI(test.name);
+    let testScope = {
+      pep: new api.PepAPI(test)
+    };
 
     // pre-test
     log.log('TEST-START', test.name);
@@ -94,7 +96,7 @@ TestSuite.prototype.loadTest = function(test) {
     // post-test
     let runTime = Date.now() - startTime;
     let fThreshold = test['failThreshold'] === undefined ?
-                          '' : ' ' + test['failThreshold']
+                          '' : ' ' + test['failThreshold'];
     log.log('TEST-END', test.name + ' ' + runTime + fThreshold);
   } catch (e) {
     log.error(test.name + ' | ' + e);

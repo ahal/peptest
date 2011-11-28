@@ -40,15 +40,15 @@
 //
 // This test will check responsiveness while resizing the window
 
-let window = getWindow();
+let window = pep.getWindow();
 let width = window.outerWidth;
 let height = window.outerHeight;
 
-performAction('resize_by', function() {
+pep.performAction('resize_by', function() {
   window.resizeBy(100, 100);
 });
 
-performAction('resize_to', function() {
+pep.performAction('resize_to', function() {
   window.resizeTo(800, 600);
 });
 

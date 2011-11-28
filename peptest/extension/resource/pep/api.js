@@ -47,26 +47,26 @@ const wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
  * This is the API exposed to tests
  * Any properties of this object will be directly injected into test scope
  */
-function PepAPI(testName) {
-  this.testName = testName;
-  this.log = new Log(this.testName);
-  this.resultHandler = new results.ResultHandler(this.testName);
+function PepAPI(test) {
+  this.test = test;
+  this.log = new Log(this.test.name);
+  this.resultHandler = new results.ResultHandler(this.test.name);
 }
 PepAPI.prototype.performAction = function(actionName, func) {
   this.resultHandler.startAction(actionName);
   func();
   this.resultHandler.endAction();
-}
+};
 PepAPI.prototype.getWindow = function(windowType) {
   if (windowType === undefined) {
     windowType = "navigator:browser";
   }
 
   return wm.getMostRecentWindow(windowType);
-}
+};
 PepAPI.prototype.sleep = function(milliseconds) {
   utils.sleep(milliseconds);
-}
+};
 
 // Logging wrapper for tests
 function Log(testName) {
@@ -74,13 +74,13 @@ function Log(testName) {
 }
 Log.prototype.debug = function(msg) {
   log.debug(this.testName + ' | ' + msg);
-}
+};
 Log.prototype.info = function(msg) {
   log.info(this.testName + ' | ' + msg);
-}
+};
 Log.prototype.warning = function(msg) {
   log.warning(this.testName + ' | ' + msg);
-}
+};
 Log.prototype.error = function(msg) {
   log.error(this.testName + ' | ' + msg);
-}
+};

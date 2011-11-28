@@ -43,7 +43,7 @@ c.open('http://mozilla.org');
 c.waitForPageLoad();
 
 let bookmark = findElement.ID(c.window.document, "bookmarksMenu");
-performAction('scroll_bookmarks', function() {
+pep.performAction('scroll_bookmarks', function() {
   bookmark.click();
   for (let i = 0; i < 15; ++i) {
     bookmark.keypress('VK_DOWN');
@@ -53,6 +53,6 @@ performAction('scroll_bookmarks', function() {
 });
 
 let showall = findElement.ID(c.window.document, "bookmarksShowAll");
-performAction('show_all_bookmarks', function() {
+pep.performAction('show_all_bookmarks', function() {
   showall.click();
 });

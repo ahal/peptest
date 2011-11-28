@@ -42,7 +42,7 @@
  */
 
 // Import mozmill and initialize a controller
-Components.utils.import("resource://mozmill/driver/mozmill.js")
+Components.utils.import("resource://mozmill/driver/mozmill.js");
 let c = getBrowserController();
 
 // Open mozilla.org and wait for the page to load
@@ -54,7 +54,7 @@ let page = findElement.ID(c.tabs.activeTab, 'header');
 // Perform our first action, reload.
 // It is very important to only place things that we
 // are interested in testing inside of a performAction call
-performAction('content_reload', function() {
+pep.performAction('content_reload', function() {
   page.rightClick();
   page.keypress('r');
 });
@@ -65,7 +65,7 @@ c.waitForPageLoad();
 
 page = findElement.ID(c.tabs.activeTab, 'main');
 // Perform our second action, go back
-performAction('content_back', function() {
+pep.performAction('content_back', function() {
   page.rightClick();
   page.keypress('b');
 });
@@ -74,7 +74,7 @@ c.sleep(10);
 
 page = findElement.ID(c.tabs.activeTab, 'home');
 // Perform our third action, scroll through context menu
-performAction('content_scroll', function() {
+pep.performAction('content_scroll', function() {
   page.rightClick();
   for (let i = 0; i < 15; ++i) {
     page.keypress('VK_DOWN');
@@ -86,17 +86,17 @@ performAction('content_scroll', function() {
 // Now test context menus in chrome
 let bar = findElement.ID(c.window.document, "appmenu-toolbar-button");
 bar.click();
-performAction('chrome_menu', function() {
+pep.performAction('chrome_menu', function() {
   bar.rightClick();
   bar.keypress('m');
 });
 
-performAction('chrome_addon', function() {
+pep.performAction('chrome_addon', function() {
   bar.rightClick();
   bar.keypress('a');
 });
 
-performAction('chrome_scroll', function() {
+pep.performAction('chrome_scroll', function() {
   bar.rightClick();
   for (let i = 0; i < 15; ++i) {
     page.keypress('VK_DOWN');
