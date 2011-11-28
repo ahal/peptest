@@ -70,7 +70,7 @@ pep.performAction('content_back', function() {
   page.keypress('b');
 });
 // Bug 699400 - waitForPageLoad times out when pressing back button
-c.sleep(10);
+c.sleep(100);
 
 page = findElement.ID(c.tabs.activeTab, 'home');
 // Perform our third action, scroll through context menu
