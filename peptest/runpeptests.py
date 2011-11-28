@@ -47,7 +47,6 @@ import traceback
 import mozlog
 import glob
 import shutil
-import signal
 import os
 import sys
 
