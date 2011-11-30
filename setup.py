@@ -49,7 +49,8 @@ version = "0.0"
 dependencies = ['mozprofile',
                 'mozprocess',
                 'mozrunner >= 3.0b3',
-                'mozlog']
+                'mozlog',
+                'mozhttpd']
 
 setup(name='peptest',
       version=version,
