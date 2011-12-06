@@ -95,11 +95,12 @@ class PepProcess(ProcessHandler):
                     threshold = 0.0
 
                 msg = results.currentTest \
-                      + ' | fail threshold: ' + str(threshold) \
-                      + ' | metric: ' + str(metric)
+                      + ' | fail threshold: ' + str(threshold)
                 if metric > threshold:
+                    msg += ' < metric: ' + str(metric)
                     self.logger.testFail(msg)
                 else:
+                    msg += ' >= metric: ' + str(metric)
                     self.logger.testPass(msg)
 
                 self.logger.testEnd(
