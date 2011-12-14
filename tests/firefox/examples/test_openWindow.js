@@ -35,7 +35,6 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-// Import mozmill and initialize a controller
 Components.utils.import("resource://mozmill/driver/mozmill.js");
 let controller = getBrowserController();
 
