@@ -113,6 +113,9 @@ class PepProcess(ProcessHandler):
             elif level == 'ACTION-END':
                 self.logger.debug(level + ' | ' + results.currentAction)
                 results.currentAction = None
+            elif level == 'PROFILE':
+                line = line[len('PEP PROFILE')+1:]
+                self.logger.info(line)
             elif level in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
                 line = line[len('PEP ' + level)+1:]
                 getattr(self.logger, level.lower())(line.rstrip())

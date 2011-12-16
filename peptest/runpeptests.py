@@ -330,6 +330,11 @@ class PeptestOptions(OptionParser):
                         default=10,
                         help="interval in milliseconds that tracer events are "
                              "sent through the event loop. Default to 10ms")
+        self.add_option("--enable-profiler",
+                        action="store_true", dest="enableProfiler",
+                        default=False,
+                        help="dumps an SPS profile after each unresponsive action "
+                             "for debugging purposes")
 
         usage = """
                 Usage instructions for runtests.py.

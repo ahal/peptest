@@ -42,6 +42,8 @@ var utils = {}; Components.utils.import('resource://pep/utils.js', utils);
 
 const wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                             .getService(Components.interfaces.nsIWindowMediator);
+const profiler = Components.classes["@mozilla.org/tools/profiler;1"]
+                                   .getService(Components.interfaces.nsIProfiler);
 
 /**
  * This is the API exposed to tests
@@ -52,11 +54,38 @@ function PepAPI(test) {
   this.log = new Log(this.test.name);
   this.resultHandler = new results.ResultHandler(this.test.name);
 }
+
 PepAPI.prototype.performAction = function(actionName, func) {
+  // initialize profiler
+  let entries = get_pref_int("profiler.", "entries");
+  let interval = get_pref_int("profiler.", "interval");
+  let walkstack = get_pref_bool("profiler.", "walkstack");
+  profiler.StartProfiler(entries, interval);
+  
+  // profiler.GetFeatures not implemented as of 16/12/2011 
+  /*let out = {value:null};
+  profiler.GetFeatures(out);
+  let features = out.value; 
+  if (walkstack && features.indexOf("SPS_WALK_STACK") != -1) {
+    profiler.EnableFeature("SPS_WALK_STACK");
+  }*/
+
   this.resultHandler.startAction(actionName);
   func();
   this.resultHandler.endAction();
+
+  // stop profiler
+  if (profiler.IsActive()) {
+    let data = {value:null};
+    profile = profiler.GetProfile(data);
+    let lines = profile.split('\n');
+    for (let i = 0; i < lines.length; ++i) {
+      log.log('PROFILE', lines[i]);
+    }
+    profiler.StopProfiler();
+  }
 };
+
 PepAPI.prototype.getWindow = function(windowType) {
   if (windowType === undefined) {
     windowType = "navigator:browser";
@@ -64,6 +93,7 @@ PepAPI.prototype.getWindow = function(windowType) {
 
   return wm.getMostRecentWindow(windowType);
 };
+
 PepAPI.prototype.sleep = function(milliseconds) {
   utils.sleep(milliseconds);
 };
@@ -84,3 +114,25 @@ Log.prototype.warning = function(msg) {
 Log.prototype.error = function(msg) {
   log.error(this.testName + ' | ' + msg);
 };
+
+
+function get_pref_int(branch, node) {
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService).getBranch(branch);
+    
+    var value = prefs.getIntPref(node);
+    return value;
+}
+
+function get_pref_bool(branch, node, defaultValue) {
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService).getBranch(branch);
+    try {
+        var value = prefs.getBoolPref(node);
+    } catch (e) {
+        if (defaultValue != null)
+            defaultValue = false;
+        return defaultValue;
+    }
+    return value;
+}
