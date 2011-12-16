@@ -79,7 +79,7 @@ PepAPI.prototype.performAction = function(actionName, func) {
     let data = {value:null};
     profile = profiler.GetProfile(data);
     let lines = profile.split('\n');
-    for (let i = 0; i < lines.length; ++i) {
+    for (let i = 0; i < lines.length - 1; ++i) {
       log.log('PROFILE', lines[i]);
     }
     profiler.StopProfiler();
