@@ -41,7 +41,6 @@
  * on various context menus in both content and chrome.
  */
 
-// Import mozmill and initialize a controller
 Components.utils.import("resource://mozmill/driver/mozmill.js");
 let c = getBrowserController();
 
@@ -53,10 +52,10 @@ c.waitForPageLoad();
 // It is very important to only place things that we
 // are interested in testing inside of a performAction call
 pep.performAction('content_reload', function() {
-  // controller.windowElement is the global window object
+  // controller.rootElement is the global window object
   // wrapped inside of a MozMillElement
-  c.windowElement.rightClick();
-  c.windowElement.keypress('r');
+  c.rootElement.rightClick();
+  c.rootElement.keypress('r');
 });
 c.waitForPageLoad();
 
@@ -65,8 +64,8 @@ c.waitForPageLoad();
 
 // Perform our second action, go back
 pep.performAction('content_back', function() {
-  c.windowElement.rightClick();
-  c.windowElement.keypress('b');
+  c.rootElement.rightClick();
+  c.rootElement.keypress('b');
 });
 // Bug 699400 - waitForPageLoad times out when pressing back button
 c.sleep(500);

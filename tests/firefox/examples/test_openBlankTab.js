@@ -44,9 +44,9 @@ c.waitForPageLoad();
 
 // Only put things you want to test for responsiveness inside a perfom action call
 pep.performAction('open_blank_tab', function() {
-  c.windowElement.keypress('t', {'ctrlKey': true});
+  c.rootElement.keypress('t', {'ctrlKey': true});
 });
 
 pep.performAction('close_blank_tab', function() {
-  c.windowElement.keypress('w', {'ctrlKey': true});
+  c.rootElement.keypress('w', {'ctrlKey': true});
 });
