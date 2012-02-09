@@ -59,7 +59,7 @@ pep.performAction('content_reload', function() {
 });
 c.waitForPageLoad();
 
-c.open("http://google.com");
+c.open("http://mozillians.org");
 c.waitForPageLoad();
 
 // Perform our second action, go back
