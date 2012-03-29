@@ -44,7 +44,7 @@ try:
 except IOError:
     description = ''
 
-version = "0.1"
+version = "1.0"
 
 dependencies = ['ManifestDestiny',
                 'mozhttpd',
