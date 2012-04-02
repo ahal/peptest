@@ -53,8 +53,9 @@ const ios = Components.classes["@mozilla.org/network/io-service;1"]
  * Any properties of this object will be injected into test scope
  * under the 'pep' namespace.
  */
-function PepAPI(test) {
+function PepAPI(test, options) {
   this.test = test;
+  this.options = options;
   this.log = new Log(this.test.name);
   this.resultHandler = new results.ResultHandler(this.test.name);
 

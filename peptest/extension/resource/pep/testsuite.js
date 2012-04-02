@@ -38,9 +38,9 @@
 var EXPORTED_SYMBOLS = ['TestSuite'];
 
 const gIOS = Components.classes['@mozilla.org/network/io-service;1']
-                               .getService(Components.interfaces.nsIIOService);
+                       .getService(Components.interfaces.nsIIOService);
 const scriptLoader = Components.classes['@mozilla.org/moz/jssubscript-loader;1']
-                       .getService(Components.interfaces.mozIJSSubScriptLoader);
+                               .getService(Components.interfaces.mozIJSSubScriptLoader);
 
 var api = {}; // api that gets injected into each test scope
 var log = {};
@@ -56,8 +56,9 @@ Components.utils.import('resource://pep/utils.js', utils);
  *
  * tests - a list of test objects to run
  */
-function TestSuite(tests) {
+function TestSuite(tests, options) {
   this.tests = tests;
+  this.options = options;
 }
 
 TestSuite.prototype.run = function() {
@@ -83,7 +84,7 @@ TestSuite.prototype.loadTest = function(test) {
 
   try {
     let testScope = {
-      pep: new api.PepAPI(test)
+      pep: new api.PepAPI(test, this.options)
     };
 
     // pre-test
