@@ -350,6 +350,9 @@ class PeptestOptions(OptionParser):
     def verifyOptions(self, options):
         """ verify correct options and cleanup paths """
         # TODO Verify all command line args
+        if options.numIterations < 1:
+            print "error: number of iterations must be a positive integer"
+            return None
         if not options.testPath:
             print "error: --test-path must specify the path to a test or test manifest"
             return None
