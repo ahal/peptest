@@ -32,14 +32,14 @@ function TestSuite(tests, options) {
 }
 
 TestSuite.prototype.run = function() {
-  for (let i = 0; i < this.tests.length; ++i) {
-    for (let j = 0; j < this.options.numIterations; ++j) {
-      this.loadTest(this.tests[i]);
+  for (let i = 0; i < this.options.numIterations; ++i) {
+    for (let j = 0; j < this.tests.length; ++j) {
+      this.loadTest(this.tests[j]);
+      // Sleep for a second because tests will interfere
+      // with each other if loaded too quickly
+      // TODO Figure out why they interfere with each other
+      utils.sleep(1000);
     }
-    // Sleep for a second because tests will interfere
-    // with each other if loaded too quickly
-    // TODO Figure out why they interfere with each other
-    utils.sleep(1000);
   }
   log.info('Test Suite Finished');
 };

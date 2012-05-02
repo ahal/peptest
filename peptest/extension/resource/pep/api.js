@@ -35,7 +35,18 @@ function PepAPI(test, options) {
  */
 PepAPI.prototype.performAction = function(actionName, func) {
   this.resultHandler.startAction(actionName);
-  func();
+  try {
+    func();
+  } catch (e) {
+    log.error(test.name + ' | ' + e);
+    if (e['stack'] !== undefined) {
+      log.debug(test.name + ' | Traceback:');
+      let lines = e.stack.split('\n');
+      for (let i = 0; i < lines.length - 1; ++i) {
+        log.debug('\t' + lines[i]);
+      }
+    }
+  }
   this.resultHandler.endAction();
 };
 /**
