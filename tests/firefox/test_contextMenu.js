@@ -47,17 +47,18 @@ pep.performAction('content_scroll', function() {
   }
 });
 
+// close the context menu
+page.keypress('VK_ESCAPE');
+
 // Now test context menus in chrome
 let bar = findElement.ID(c.window.document, "toolbar-menubar");
 bar.click();
 pep.performAction('chrome_navigation', function() {
   bar.rightClick();
   bar.keypress('n');
-});
-
-pep.performAction('chrome_addon', function() {
+  c.sleep(100);
   bar.rightClick();
-  bar.keypress('a');
+  bar.keypress('n');
 });
 
 pep.performAction('chrome_scroll', function() {
@@ -68,3 +69,5 @@ pep.performAction('chrome_scroll', function() {
     c.sleep(10);
   }
 });
+
+bar.keypress('VK_ESCAPE');
