@@ -38,9 +38,9 @@ PepAPI.prototype.performAction = function(actionName, func) {
   try {
     func();
   } catch (e) {
-    log.error(test.name + ' | ' + e);
+    log.error(this.test.name + ' | ' + e);
     if (e['stack'] !== undefined) {
-      log.debug(test.name + ' | Traceback:');
+      log.debug(this.test.name + ' | Traceback:');
       let lines = e.stack.split('\n');
       for (let i = 0; i < lines.length - 1; ++i) {
         log.debug('\t' + lines[i]);
