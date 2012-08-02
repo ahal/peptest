@@ -114,8 +114,8 @@ class Peptest():
         self.logger.debug('Starting Peptest')
 
         # start firefox
-        self.runner.start()
-        self.runner.wait(outputTimeout=self.options.timeout)
+        self.runner.start(outputTimeout=self.options.timeout)
+        self.runner.wait()
         crashed = self.checkForCrashes(results.currentTest)
         self.stop()
 
