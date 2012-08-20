@@ -1,18 +1,5 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
-/*let sites = ['huffingtonpost.com/www.huffingtonpost.com/index.html',
-             'twitter.com/twitter.com/ICHCheezburger.html',
-             'cgi.ebay.com/cgi.ebay.com/ALL-NEW-KINDLE-3-eBOOK-WIRELESS-READING-DEVICE-W-WIFI-/130496077314@pt=LH_DefaultDomain_0&hash=item1e622c1e02.html',
-             'bbc.co.uk/www.bbc.co.uk/news/index.html',
-             'cnn.com/www.cnn.com/index.html',
-             'cnet.com/www.cnet.com/index.html',
-             'thepiratebay.org/thepiratebay.org/top/201.html',
-             'dailymotion.com/www.dailymotion.com/us.html',
-             'imgur.com/imgur.com/gallery/index.html',
-             'reddit.com/www.reddit.com/index.html',
-             'dailymail.co.uk/www.dailymail.co.uk/ushome/index.html',
-             'w3schools.com/www.w3schools.com/html/default.asp.html']*/
-
 let sites = ['thesartorialist.blogspot.com/thesartorialist.blogspot.com/index.html',
              'cakewrecks.blogspot.com/cakewrecks.blogspot.com/index.html',
              'baidu.com/www.baidu.com/s@wd=mozilla.html',
@@ -114,20 +101,15 @@ let sites = ['thesartorialist.blogspot.com/thesartorialist.blogspot.com/index.ht
              'youtube.com/www.youtube.com/music.html',
              'people.com.cn/people.com.cn/index.html'];
 
-
 Components.utils.import('resource://mozmill/driver/mozmill.js');
-Components.utils.import('resource://mozmill/driver/mozelement.js');
 let c = getBrowserController();
 let win = pep.getWindow();
 
-let tabbrowser = win.document.getElementById('tabbrowser-tabs');
-for (a in tabbrowser) {
-  pep.log.info(a + ': ' + tabbrowser[a]);
-}
-
+// load all of the test pages in a separate tab
 for (let i = 0; i < sites.length; ++i) {
   c.rootElement.keypress('t', {'accelKey': true});
   c.open(sites[i]);
+  // it doesn't really matter if the page times out loading
   try {
     c.waitForPageLoad();
   } catch (e) {}
@@ -136,12 +118,9 @@ for (let i = 0; i < sites.length; ++i) {
 let tabbrowser = win.document.getElementById('tabbrowser-tabs');
 let tabs = tabbrowser.getElementsByTagName('tab');
 
-// select the first tab
-//tabbrowser.tabbrowser.selectTabAtIndex(0);
+// switch between all the tabs
 pep.performAction('switch_tabs', function() {
   for (let i = 0; i < tabs.length; ++i) {
- //   tab = new MozMillElement('Elem', tabs[i]);
- //   tab.click();
     c.rootElement.keypress('VK_TAB', {'accelKey': true});
     c.sleep(500);
   }
